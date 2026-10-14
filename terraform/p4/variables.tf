@@ -43,3 +43,9 @@ variable "evaluator_access_until" {
   type        = string
   default     = "2026-11-15T23:59:59Z"
 }
+
+variable "portal_origins" {
+  description = "Orígenes del portal que pueden consultar GET /captures desde el navegador (CORS)."
+  type        = list(string)
+  default     = ["http://localhost:8080", "http://localhost:5173"]
+}

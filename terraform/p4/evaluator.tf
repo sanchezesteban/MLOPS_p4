@@ -6,6 +6,12 @@
 resource "aws_iam_user" "evaluator" {
   name = "${var.name_prefix}-evaluador"
   path = "/${var.name_prefix}/"
+
+  # La consola guarda la descripción de cada access key como etiqueta del usuario;
+  # Terraform no las administra.
+  lifecycle {
+    ignore_changes = [tags]
+  }
 }
 
 data "aws_iam_policy_document" "evaluator" {
@@ -84,6 +90,7 @@ data "aws_iam_policy_document" "evaluator" {
     resources = [
       "${aws_cloudwatch_log_group.ingest.arn}:*",
       "${aws_cloudwatch_log_group.api.arn}:*",
+      "${aws_cloudwatch_log_group.read.arn}:*",
     ]
     condition {
       test     = "DateLessThan"
@@ -111,7 +118,7 @@ data "aws_iam_policy_document" "evaluator" {
       "lambda:GetFunctionConfiguration",
       "lambda:GetFunctionConcurrency",
     ]
-    resources = [aws_lambda_function.ingest.arn]
+    resources = [aws_lambda_function.ingest.arn, aws_lambda_function.read.arn]
     condition {
       test     = "DateLessThan"
       variable = "aws:CurrentTime"

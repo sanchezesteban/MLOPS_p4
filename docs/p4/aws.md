@@ -209,8 +209,8 @@ fecha deja de funcionar aunque nadie lo borre.
 - **Consola:** `https://595981034933.signin.aws.amazon.com/console`, región `us-east-2`.
   Ikram crea la contraseña en IAM y la entrega por privado; no se publica.
 - **Qué puede ver:** objetos y versiones de los dos buckets, la tabla `mlops-p4-captures` y su
-  índice, los logs `/aws/lambda/mlops-p4-ingest` y `/aws/apigateway/mlops-p4-captures`, y la
-  configuración y concurrencia de la Lambda (para ver si el fallo controlado está activo).
+  índice, los logs `/aws/lambda/mlops-p4-ingest`, `/aws/lambda/mlops-p4-read` y
+  `/aws/apigateway/mlops-p4-captures`, y la configuración y concurrencia de las Lambdas (para ver si el fallo controlado está activo).
 - **Qué no puede hacer:** escribir, borrar, cambiar la Lambda o la API, ni administrar IAM.
 
 Comprobado con `aws iam simulate-principal-policy`, con la fecha simulada antes y después de la expiración:
@@ -228,3 +228,61 @@ s3:GetObject después del 2026-11-15                   implicitDeny
 ```
 
 Para alargar o acortar el acceso: `terraform apply -var 'evaluator_access_until=AAAA-MM-DDT23:59:59Z'`.
+
+## API de lectura para el portal (#17)
+
+`GET https://el1c2mr69k.execute-api.us-east-2.amazonaws.com/captures?limit=50`
+
+- **Sin firma**, para que el navegador del portal la consulte directamente. Es de solo lectura
+  y tiene el mismo tope de tráfico de la API (10 req/s, ráfaga de 20).
+- **CORS** solo para `portal_origins`: por ahora `http://localhost:8080` (docker compose) y
+  `http://localhost:5173` (vite dev). Cuando el portal esté en AWS (#18) se agrega su URL.
+- **Orden:** de la más reciente a la más antigua (índice `by_captured_at`,
+  `ScanIndexForward = false`).
+- **`limit`:** de 1 a 100 (50 por defecto). Fuera de rango → `400 {"error", "field": "limit"}`.
+- Cada elemento trae los campos del contrato v1 más `image_url`, una URL firmada de S3 válida
+  15 minutos. No se exponen `gsi_pk` ni `captured_at_utc`. Respuesta con `Cache-Control: no-store`.
+- Lambda `mlops-p4-read` (`app/edge_ingest/read_api.py`). Su rol solo puede consultar el índice
+  y leer `captures/*` para firmar las URL; no escribe nada.
+
+```json
+{
+  "items": [
+    {
+      "capture_id": "bdd524df-535e-43bd-b76e-db3e5f974403",
+      "captured_at": "2026-10-13T22:30:38-06:00",
+      "received_at": "2026-10-14T04:30:46.677Z",
+      "device_id": "rpi-zero2w-01",
+      "model_version": "resnet18-p3-v1.0.0-int8",
+      "model_sha256": "58effa03a01cf847bb9a94a96c30247220b47bb394715949e404450ca4d9a1bb",
+      "predicted_class": "dog",
+      "confidence": 0.6278,
+      "latency_ms": 486.9,
+      "crop": { "x": 80, "y": 40, "w": 480, "h": 400 },
+      "image_key": "captures/2026/10/14/bdd524df-535e-43bd-b76e-db3e5f974403.jpg",
+      "image_url": "https://mlops-p4-captures-595981034933.s3.us-east-2.amazonaws.com/captures/…?X-Amz-…"
+    }
+  ]
+}
+```
+
+(Respuesta real; `image_url` está recortada.)
+
+Pruebas sin AWS: `cd app && uv run pytest tests/test_edge_read_api.py` (9 casos). Contra la API real:
+
+```text
+GET ?limit=3                      → 200, 3 capturas de la más reciente a la más antigua, 12 campos cada una
+GET image_url                     → 200 image/jpeg (la foto de la captura bdd524df…)
+GET ?limit=500                    → 400 {"field": "limit"}
+OPTIONS con Origin localhost:8080 → 204, access-control-allow-origin: http://localhost:8080
+GET con Origin ajeno              → sin access-control-allow-origin (el navegador lo bloquea)
+POST /captures sin firma          → 403 (la ingesta sigue protegida)
+```
+
+Desde el portal (#15):
+
+```ts
+const res = await fetch(`${import.meta.env.VITE_CAPTURES_API_URL}/captures?limit=50`);
+if (!res.ok) throw new Error((await res.json()).error);
+const { items } = await res.json(); // ya vienen de la más reciente a la más antigua
+```

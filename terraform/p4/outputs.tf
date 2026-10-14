@@ -41,3 +41,7 @@ output "evaluator_user" {
 output "console_signin_url" {
   value = "https://${local.account_id}.signin.aws.amazon.com/console"
 }
+
+output "read_function" {
+  value = aws_lambda_function.read.function_name
+}

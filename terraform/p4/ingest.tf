@@ -74,6 +74,15 @@ resource "aws_lambda_function" "ingest" {
 resource "aws_apigatewayv2_api" "captures" {
   name          = "${var.name_prefix}-captures"
   protocol_type = "HTTP"
+
+  # El portal consulta `GET /captures` desde el navegador (#17). `POST` no lo usa ningún
+  # navegador: la Pi firma con SigV4 y CORS no aplica.
+  cors_configuration {
+    allow_origins = var.portal_origins
+    allow_methods = ["GET"]
+    allow_headers = ["content-type"]
+    max_age       = 300
+  }
 }
 
 resource "aws_apigatewayv2_integration" "ingest" {
