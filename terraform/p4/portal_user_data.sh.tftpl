@@ -1,0 +1,68 @@
+#!/bin/bash
+# Arranque de la EC2 del portal (#18). Corre una sola vez como root (cloud-init).
+# Instala Docker, clona el repo y levanta el portal base de P1–P3 con docker compose.
+# Las contraseñas de MariaDB/MinIO se generan aquí y solo viven en /opt/portal/.env.
+set -euxo pipefail
+exec > >(tee -a /var/log/portal-bootstrap.log) 2>&1
+
+# Swap: compilar frontend y backend con 2 GB de RAM no alcanza sin él.
+if [ ! -f /swapfile ]; then
+  fallocate -l 4G /swapfile
+  chmod 600 /swapfile
+  mkswap /swapfile
+  swapon /swapfile
+  echo '/swapfile none swap sw 0 0' >> /etc/fstab
+fi
+
+# Docker Engine + compose/buildx desde el repositorio oficial de Docker.
+export DEBIAN_FRONTEND=noninteractive
+apt-get update
+apt-get install -y ca-certificates curl git
+install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+chmod a+r /etc/apt/keyrings/docker.asc
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" \
+  > /etc/apt/sources.list.d/docker.list
+apt-get update
+apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+systemctl enable --now docker
+
+if [ ! -d /opt/portal/.git ]; then
+  git clone --branch "${git_ref}" "${repo_url}" /opt/portal
+fi
+cd /opt/portal
+
+if [ ! -f .env ]; then
+  umask 077
+  cat > .env <<EOF
+MARIADB_ROOT_PASSWORD=$(openssl rand -hex 20)
+MINIO_ROOT_USER=portal-$(openssl rand -hex 4)
+MINIO_ROOT_PASSWORD=$(openssl rand -hex 20)
+EOF
+fi
+# docker compose interpola todos los servicios; trainer-worker (no se levanta aquí) exige AWS_PROFILE.
+grep -q '^AWS_PROFILE=' .env || echo 'AWS_PROFILE=no-usado-en-el-portal' >> .env
+
+# Override solo para AWS: el portal se publica en el puerto 80; el resto de los
+# puertos del compose queda cerrado por el security group.
+cat > /opt/portal/docker-compose.aws.yml <<'EOF'
+${compose_override}
+EOF
+
+# Script de despliegue reutilizable (lo invoca scripts/p4_portal_deploy.sh vía SSM).
+cat > /usr/local/bin/portal-deploy <<'EOF'
+#!/bin/bash
+set -euo pipefail
+cd /opt/portal
+REF="$${1:-$(git rev-parse --abbrev-ref HEAD)}"
+git fetch --prune origin
+git checkout "$REF"
+git reset --hard "origin/$REF"
+docker compose -f docker-compose.yml -f docker-compose.aws.yml up -d --build --remove-orphans ${services}
+docker image prune -f
+docker compose -f docker-compose.yml -f docker-compose.aws.yml ps
+echo "desplegado: $(git rev-parse --short HEAD) ($REF)"
+EOF
+chmod +x /usr/local/bin/portal-deploy
+
+/usr/local/bin/portal-deploy "${git_ref}"
