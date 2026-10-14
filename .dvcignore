@@ -1,0 +1,8 @@
+# Add patterns of files dvc should ignore, which could improve
+# the performance. Learn more at
+# https://dvc.org/doc/user-guide/dvcignore
+
+# Los .pyc de __pycache__ no son fuentes y no deben entrar en los hashes de
+# las etapas (sin esto, dvc.lock cambia tras cada corrida).
+__pycache__/
+*.pyc

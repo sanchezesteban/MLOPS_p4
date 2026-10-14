@@ -1,0 +1,10 @@
+{
+  "checkpoint": "../models/p3/r02/best.pt",
+  "manifest": "../data/derived/manifests/v0.1.1/manifest.csv",
+  "split": "val",
+  "samples": 131,
+  "accuracy": 0.9618320610687023,
+  "macro_f1": 0.9618231625575566,
+  "recall_cat": 0.9552238805970149,
+  "recall_dog": 0.96875
+}
