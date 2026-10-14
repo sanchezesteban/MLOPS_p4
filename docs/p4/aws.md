@@ -44,9 +44,10 @@ protección contra borrado.
 | Equipo (`mlops-p4-team`) | Leer y subir en el bucket de modelos (DVC push/pull); leer capturas y la tabla | Borrar modelos, escribir capturas o la tabla, administrar IAM |
 | Pi (`mlops-p4-device-…`) | `execute-api:Invoke` sobre `*/*/POST/captures` de esta cuenta y región | Leer (`GET`), escribir directo en S3/DynamoDB |
 | Ikram | Administración de la cuenta (aplicar Terraform) | — |
+| Evaluador (`mlops-p4-evaluador`) | Leer los dos buckets, la tabla, los logs de la ingesta y la API, y la configuración de la Lambda (hasta el 2026-11-15 UTC) | Escribir, borrar, cambiar la Lambda o administrar IAM |
 
 La API de ingesta (#16) debe usar autorización **AWS_IAM** en `POST /captures`; la Pi firma
-cada petición (SigV4) con su credencial. El rol de solo lectura para el evaluador va en #19.
+cada petición (SigV4) con su credencial. El acceso de solo lectura del evaluador se describe en «Acceso de evaluación».
 
 Comprobado con el simulador de políticas de IAM (`aws iam simulate-principal-policy`) tras el `apply`:
 
@@ -197,3 +198,33 @@ aws s3api head-object --bucket mlops-p4-captures-595981034933 --region us-east-2
 Las capturas del simulador llevan `device_id = rpi-zero2w-01` y una imagen sintética con el
 texto `SIMULADOR`. Antes de la entrega se borran o se distinguen de las capturas reales de la Pi
 (#19).
+
+## Acceso de evaluación (#19)
+
+Usuario `mlops-p4-evaluador` (`terraform/p4/evaluator.tf`), con la política administrada
+`mlops-p4-evaluador-solo-lectura`. Cada permiso lleva la condición
+`aws:CurrentTime < evaluator_access_until` (por defecto `2026-11-15T23:59:59Z`): al pasar la
+fecha deja de funcionar aunque nadie lo borre.
+
+- **Consola:** `https://595981034933.signin.aws.amazon.com/console`, región `us-east-2`.
+  Ikram crea la contraseña en IAM y la entrega por privado; no se publica.
+- **Qué puede ver:** objetos y versiones de los dos buckets, la tabla `mlops-p4-captures` y su
+  índice, los logs `/aws/lambda/mlops-p4-ingest` y `/aws/apigateway/mlops-p4-captures`, y la
+  configuración y concurrencia de la Lambda (para ver si el fallo controlado está activo).
+- **Qué no puede hacer:** escribir, borrar, cambiar la Lambda o la API, ni administrar IAM.
+
+Comprobado con `aws iam simulate-principal-policy`, con la fecha simulada antes y después de la expiración:
+
+```text
+s3:GetObject / s3:ListBucket (capturas y modelos)    allowed
+dynamodb:Query / GetItem                              allowed
+logs:FilterLogEvents (API)                            allowed
+lambda:GetFunctionConcurrency                         allowed
+s3:PutObject / s3:DeleteObject                        implicitDeny
+dynamodb:PutItem / DeleteItem                         implicitDeny
+lambda:PutFunctionConcurrency                         implicitDeny
+iam:CreateUser                                        implicitDeny
+s3:GetObject después del 2026-11-15                   implicitDeny
+```
+
+Para alargar o acortar el acceso: `terraform apply -var 'evaluator_access_until=AAAA-MM-DDT23:59:59Z'`.

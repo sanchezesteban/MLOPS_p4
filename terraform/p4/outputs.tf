@@ -33,3 +33,11 @@ output "api_url" {
 output "ingest_function" {
   value = aws_lambda_function.ingest.function_name
 }
+
+output "evaluator_user" {
+  value = aws_iam_user.evaluator.name
+}
+
+output "console_signin_url" {
+  value = "https://${local.account_id}.signin.aws.amazon.com/console"
+}

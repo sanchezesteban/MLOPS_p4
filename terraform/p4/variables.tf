@@ -37,3 +37,9 @@ variable "budget_emails" {
     error_message = "Define al menos un correo en budget_emails."
   }
 }
+
+variable "evaluator_access_until" {
+  description = "Fecha (UTC, ISO-8601) en que expira el acceso de solo lectura del evaluador."
+  type        = string
+  default     = "2026-11-15T23:59:59Z"
+}
