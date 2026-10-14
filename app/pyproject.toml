@@ -39,6 +39,11 @@ ml = [
     "scikit-learn==1.9.1",
     "pillow==10.4.0",
     "pandas>=3.0.6",
+    # P4-05: conversión reproducible PyTorch -> ONNX FP32 -> ONNX INT8.
+    # Fijadas con "==" por el mismo motivo que torch: la conversión y la
+    # cuantización deben dar el mismo artefacto en cualquier máquina.
+    "onnx==1.23.2",
+    "onnxruntime==1.31.0",
 ]
 
 [tool.ruff]
