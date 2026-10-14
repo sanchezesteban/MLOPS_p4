@@ -1,0 +1,12 @@
+{
+  "percentile_method": "numpy.percentile con interpolaci\u00f3n lineal (method='linear')",
+  "size": {
+    "fp32_bytes": 45224191,
+    "int8_bytes": 11430716,
+    "reduction_percent": 74.72433282443903
+  },
+  "latency": null,
+  "speedup": null,
+  "status": "parcial",
+  "latency_note": "Pendiente del benchmark de la Pi (issue #11)."
+}
