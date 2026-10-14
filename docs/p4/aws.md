@@ -195,9 +195,9 @@ aws s3api head-object --bucket mlops-p4-captures-595981034933 --region us-east-2
   --key captures/AAAA/MM/DD/<capture_id>.jpg
 ```
 
-Las capturas del simulador llevan `device_id = rpi-zero2w-01` y una imagen sintética con el
-texto `SIMULADOR`. Antes de la entrega se borran o se distinguen de las capturas reales de la Pi
-(#19).
+Las capturas del simulador llevan `device_id = simulador-laptop` (cámbialo con `--device-id`)
+y una imagen sintética con el texto `SIMULADOR`. Así no se confunden con las de la Pi y se
+borran antes de la entrega con `evidence.py cleanup` (ver «Evidencia para la entrega»).
 
 ## Acceso de evaluación (#19)
 
@@ -286,3 +286,47 @@ const res = await fetch(`${import.meta.env.VITE_CAPTURES_API_URL}/captures?limit
 if (!res.ok) throw new Error((await res.json()).error);
 const { items } = await res.json(); // ya vienen de la más reciente a la más antigua
 ```
+
+## Evidencia para la entrega (#19)
+
+`app/edge_ingest/evidence.py` sirve al equipo y al evaluador. Las consultas son de solo
+lectura y cada quien las corre con su propio perfil (`mlops-p4` o el del evaluador):
+
+```bash
+cd app
+# Una captura: metadatos en DynamoDB + objeto en S3 (versión, tamaño, fecha) y, opcionalmente, la foto.
+uv run python -m edge_ingest.evidence --profile mlops-p4 get <capture_id> --download foto.jpg
+
+# Todas las capturas, de la más reciente a la más antigua → evidencias/aws/eventos.csv y eventos.json
+uv run python -m edge_ingest.evidence --profile mlops-p4 export --out ../evidencias/aws
+```
+
+`export` imprime un resumen: total de eventos, conteo por clase y por dispositivo, y las
+capturas cuya imagen falta en S3. El CSV trae una fila por evento con los campos del contrato,
+`captured_at_utc`, el recorte separado en columnas y, de S3, `image_in_s3`, `image_bytes`,
+`image_version_id` e `image_last_modified`.
+
+Prueba contra AWS (2026-10-14): `get` del evento `bdd524df…` devolvió sus metadatos, la versión
+`k9YHvxeX…` de su imagen (15 202 B) y la descargó. `get` de un ID inexistente sale con código 1.
+`export` escribió 8 eventos sin imágenes faltantes.
+
+### Limpieza de capturas de prueba
+
+Requiere un perfil administrador. Borra los metadatos y **todas las versiones** de la imagen de
+un `device_id`. Sin `--confirm` solo lista lo que borraría:
+
+```bash
+uv run python -m edge_ingest.evidence --profile <admin> cleanup --device-id simulador-laptop
+uv run python -m edge_ingest.evidence --profile <admin> cleanup --device-id simulador-laptop --confirm
+```
+
+Las 8 capturas del primer ensayo del simulador (2026-10-14 04:27–04:30 UTC) se enviaron antes
+de que el simulador tuviera `device_id` propio, así que quedaron como `rpi-zero2w-01`. Se borran
+por ID antes de que la Pi real empiece a enviar.
+
+### Configuración de la Pi sin secretos
+
+Plantilla: `app/edge/.env.pi.example`. Se copia a `app/edge/.env.pi`, que Git ignora por el
+patrón `.env.*`. Incluye `DEVICE_ID`, la ruta y el SHA-256 del modelo INT8, el recorte, el
+intervalo de captura, la URL de la API y el **nombre** del perfil AWS. La llave se configura con
+`aws configure --profile mlops-p4-device` y nunca va en el archivo.

@@ -33,7 +33,9 @@ from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
 from PIL import Image, ImageDraw
 
-DEVICE_ID = "rpi-zero2w-01"
+# Identidad propia del simulador: sus capturas no se confunden con las de la Pi
+# (`rpi-zero2w-01`) y se pueden limpiar antes de la entrega (`evidence.py cleanup`).
+DEVICE_ID = "simulador-laptop"
 MODEL_VERSION = "resnet18-p3-v1.0.0-int8"
 # SHA-256 del ONNX INT8 publicado en reports/p4/conversion_log.json (#5).
 MODEL_SHA256 = "58effa03a01cf847bb9a94a96c30247220b47bb394715949e404450ca4d9a1bb"
@@ -53,13 +55,13 @@ def synthetic_jpeg(label: str, capture_id: str) -> bytes:
     return buffer.getvalue()
 
 
-def build_event(label: str, image: bytes | None) -> dict:
+def build_event(label: str, image: bytes | None, device_id: str = DEVICE_ID) -> dict:
     capture_id = str(uuid.uuid4())
     jpeg = image if image is not None else synthetic_jpeg(label, capture_id)
     return {
         "capture_id": capture_id,
         "captured_at": datetime.now(LOCAL_TZ).isoformat(timespec="seconds"),
-        "device_id": DEVICE_ID,
+        "device_id": device_id,
         "model_version": MODEL_VERSION,
         "model_sha256": MODEL_SHA256,
         "predicted_class": label,
@@ -96,6 +98,7 @@ def main() -> None:
     parser.add_argument("--repeat", type=int, default=1, help="envíos de cada captura (mismo ID)")
     parser.add_argument("--label", choices=["cat", "dog", "alternate"], default="alternate")
     parser.add_argument("--image", type=Path, default=None, help="JPEG real en lugar del sintético")
+    parser.add_argument("--device-id", default=DEVICE_ID, help="device_id de los eventos")
     parser.add_argument("--log", type=Path, default=None, help="guarda cada resultado en JSONL")
     args = parser.parse_args()
 
@@ -105,7 +108,7 @@ def main() -> None:
 
     for index in range(args.count):
         label = args.label if args.label != "alternate" else ("cat", "dog")[index % 2]
-        event = build_event(label, image)
+        event = build_event(label, image, args.device_id)
         body = json.dumps(event).encode("utf-8")
         for attempt in range(1, args.repeat + 1):
             started = time.perf_counter()
