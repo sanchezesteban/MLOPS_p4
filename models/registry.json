@@ -16,5 +16,14 @@
         "checkpoint_sha256": "f759cde23fc314b63c4a4e3c20127ef1eb84121e579b04e7c97911ada20ab7d9",
         "data_release": "v0.1.1",
         "published_at": "2026-10-03T01:27:42.973813+00:00"
+    },
+    "1.0.0-int8": {
+        "s3_path": "s3://mlops-p4-models-595981034933/dvc/files/md5/d1/da489b980cb3364ce3511f355cf263",
+        "sha256": "58effa03a01cf847bb9a94a96c30247220b47bb394715949e404450ca4d9a1bb",
+        "VersionId": "ePN5_f1LyOnw8j7XdEOKgoabZ_YVkiiy",
+        "run_id": "7e7b4a4b35464cfebb6b41714a3ad931",
+        "checkpoint_sha256": "f759cde23fc314b63c4a4e3c20127ef1eb84121e579b04e7c97911ada20ab7d9",
+        "data_release": "v0.1.1",
+        "published_at": "2026-10-14T16:31:33+00:00"
     }
 }

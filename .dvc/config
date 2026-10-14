@@ -1,0 +1,5 @@
+[core]
+    remote = p4
+['remote "p4"']
+    url = s3://mlops-p4-models-595981034933/dvc
+    region = us-east-2
