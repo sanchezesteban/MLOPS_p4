@@ -42,7 +42,7 @@ incrementa la versión (`v1` → `v2`) y se anota en el historial al final.
 | `model_version` | string | Sí | Pi | Versión del artefacto cargado. Ej.: `resnet18-p3-v1.0.0-int8`. |
 | `model_sha256` | string (64 hex) | Sí | Pi | SHA-256 del archivo `.onnx` cargado; debe coincidir con el publicado (#7). |
 | `predicted_class` | string | Sí | Pi | Solo `cat` o `dog`. |
-| `confidence` | número | Sí | Pi | Entre `0` y `1` (probabilidad de la clase predicha). |
+| `confidence` | número | Sí | Pi | Entre `0` y `1`: probabilidad **softmax** de la clase predicha (argmax). El ONNX devuelve *logits*; la Pi aplica softmax. |
 | `latency_ms` | número | Sí | Pi | Preprocesamiento + inferencia. **No** incluye el envío. |
 | `crop` | objeto `{x, y, w, h}` | Sí | Pi | Región clasificada en píxeles de la imagen original. Si no hay recorte: `null`. |
 | `image` | archivo JPEG | Sí | Pi | La fotografía capturada, tal cual se clasificó (ver «Envío»). |
@@ -116,8 +116,11 @@ captures/
 ## Lectura: AWS → portal
 
 **`GET /captures?limit=50`** devuelve las capturas de la más reciente a la más antigua
-(por `captured_at`). Cada elemento trae todos los campos del evento, excepto `image_b64`,
-más `image_url`: una URL firmada de S3 válida por 15 minutos.
+(por `captured_at` normalizado a UTC). Si dos capturas tienen el mismo `captured_at`, el
+portal desempata por `received_at` (más reciente primero). Cada elemento trae todos los campos del evento, excepto `image_b64`,
+más `image_url`: una URL firmada de S3 válida por 15 minutos. Expira: el portal la renueva
+volviendo a pedir `GET /captures` (botón «Actualizar» o refresco automático); no debe
+guardarla.
 
 ```json
 {
@@ -154,3 +157,4 @@ El portal muestra como mínimo: foto, clase, confianza, `captured_at`, `capture_
 | Versión | Fecha | Cambio |
 |---|---|---|
 | v1 | 2026-10-13 | Versión inicial (issue #1) |
+| v1 | 2026-10-14 | Aclaraciones de la revisión (sin cambiar campos): `confidence` = softmax, desempate por `received_at`, expiración de `image_url` |
