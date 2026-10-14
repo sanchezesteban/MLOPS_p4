@@ -108,3 +108,92 @@ terraform output
 ```
 
 Primer `apply` (2026-10-13): `Resources: 24 added, 0 changed, 0 destroyed.`
+
+## Ingesta de capturas (#16)
+
+`POST https://el1c2mr69k.execute-api.us-east-2.amazonaws.com/captures`, con autorización
+**AWS_IAM**: cada petición va firmada con SigV4 (servicio `execute-api`, región `us-east-2`).
+Sin firma, la API responde `403`.
+
+| Pieza | Recurso | Código |
+|---|---|---|
+| API HTTP | `mlops-p4-captures` (stage `$default`, límite 10 req/s y ráfaga de 20) | `terraform/p4/ingest.tf` |
+| Lambda | `mlops-p4-ingest` (Python 3.12, solo boto3) | `app/edge_ingest/handler.py` |
+| Rol de la Lambda | `s3:PutObject` en `captures/*`; `dynamodb:GetItem`/`PutItem` en la tabla | `terraform/p4/ingest.tf` |
+| Logs | `/aws/lambda/mlops-p4-ingest` y `/aws/apigateway/mlops-p4-captures` (30 días) | `terraform/p4/ingest.tf` |
+| Simulador | Envía eventos del contrato v1 firmados como la Pi | `app/edge_ingest/simulate.py` |
+| Fallo controlado | Apaga y prende la ingesta sin tocar datos | `scripts/p4_ingesta_fallo.sh` |
+
+La ingesta:
+
+1. Valida todos los campos del contrato v1 y rechaza campos desconocidos. Si algo está mal,
+   responde `400` con `{"error", "field"}` (por ejemplo, `confidence` fuera de 0–1, una fecha
+   sin zona horaria o una imagen que no es JPEG o supera 1 MB).
+2. Si el `capture_id` ya existe, responde `200` con `"duplicate": true` y no escribe nada.
+3. Guarda el JPEG en `captures/AAAA/MM/DD/<capture_id>.jpg`, con la fecha UTC de `captured_at`.
+   La clave es determinista: un reintento escribe el mismo objeto.
+4. Escribe los metadatos con `attribute_not_exists(capture_id)` y agrega `received_at`,
+   `image_key`, `captured_at_utc` y `gsi_pk`. Responde `201`.
+5. Ante una falla interna responde `500`, y la Pi reintenta con el mismo `capture_id`.
+
+Pruebas sin AWS (S3 y DynamoDB falsos): `cd app && uv run pytest tests/test_edge_ingest.py`
+(25 casos).
+
+### Simulador
+
+La Pi y el simulador usan la llave de `mlops-p4-device-rpi-zero2w-01`, en un perfil local:
+
+```bash
+cd app
+uv run python -m edge_ingest.simulate \
+  --url https://el1c2mr69k.execute-api.us-east-2.amazonaws.com \
+  --profile mlops-p4-device --count 4                 # 4 capturas nuevas (cat/dog)
+uv run python -m edge_ingest.simulate --url … --profile mlops-p4-device --count 1 --repeat 3
+uv run python -m edge_ingest.simulate --url … --profile mlops-p4-device --image foto.jpg --label dog
+```
+
+`--log salida.jsonl` guarda cada envío (sin la imagen) con su estado y su `send_ms`.
+
+Resultado contra la API real (2026-10-14 UTC):
+
+```text
+dda0ea54-… cat intento=1 -> 201 {"…", "duplicate": false} (546.4 ms)
+515ea6ad-… dog intento=1 -> 201 {"…", "duplicate": false} (408.0 ms)
+fbd60756-… cat intento=1 -> 201 {"received_at": "2026-10-14T04:28:04.317Z", "duplicate": false}
+fbd60756-… cat intento=2 -> 200 {"received_at": "2026-10-14T04:28:04.317Z", "duplicate": true}
+fbd60756-… cat intento=3 -> 200 {"received_at": "2026-10-14T04:28:04.317Z", "duplicate": true}
+confidence = 1.5         -> 400 {"error": "debe ser un número entre 0 y 1", "field": "confidence"}
+```
+
+La tabla queda con un solo registro para `fbd60756-…`, y el JPEG tiene una sola versión en S3
+(no se sobrescribió).
+
+### Fallo controlado y reintento (criterio 4.3)
+
+```bash
+AWS_PROFILE=<admin> bash scripts/p4_ingesta_fallo.sh off     # concurrencia de la Lambda = 0
+# la Pi envía → 503; la captura queda con send_status = error
+AWS_PROFILE=<admin> bash scripts/p4_ingesta_fallo.sh on      # quita la reserva
+# la Pi reintenta el mismo capture_id → 201; un segundo reintento → 200 duplicate
+```
+
+Ensayado el 2026-10-14 (UTC) con `bdd524df-535e-43bd-b76e-db3e5f974403`: `503` → `201` → `200`
+(`duplicate: true`), con 1 registro en DynamoDB y 1 versión de la imagen. El access log de la
+API registra el `503`. Prender y apagar no deja diferencias en Terraform
+(`terraform plan` → `No changes`).
+
+### Consultas de solo lectura
+
+```bash
+aws dynamodb get-item --table-name mlops-p4-captures --region us-east-2 \
+  --key '{"capture_id":{"S":"<capture_id>"}}'
+aws dynamodb query --table-name mlops-p4-captures --region us-east-2 \
+  --index-name by_captured_at --key-condition-expression "gsi_pk = :p" \
+  --expression-attribute-values '{":p":{"S":"capture"}}' --no-scan-index-forward
+aws s3api head-object --bucket mlops-p4-captures-595981034933 --region us-east-2 \
+  --key captures/AAAA/MM/DD/<capture_id>.jpg
+```
+
+Las capturas del simulador llevan `device_id = rpi-zero2w-01` y una imagen sintética con el
+texto `SIMULADOR`. Antes de la entrega se borran o se distinguen de las capturas reales de la Pi
+(#19).

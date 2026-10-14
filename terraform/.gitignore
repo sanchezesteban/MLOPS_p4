@@ -16,3 +16,6 @@ terraform.rc
 # Keep example variables and provider lockfiles in Git.
 !*.tfvars.example
 !.terraform.lock.hcl
+
+# Zips de Lambda generados por archive_file.
+build/

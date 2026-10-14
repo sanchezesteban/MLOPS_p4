@@ -24,3 +24,12 @@ output "team_users" {
 output "device_user" {
   value = aws_iam_user.device.name
 }
+
+output "api_url" {
+  description = "URL base de la API de capturas (POST /captures con SigV4)."
+  value       = aws_apigatewayv2_api.captures.api_endpoint
+}
+
+output "ingest_function" {
+  value = aws_lambda_function.ingest.function_name
+}
