@@ -1,0 +1,16 @@
+{
+  "percentile_method": "numpy.percentile con interpolaci\u00f3n lineal (method='linear')",
+  "size": {
+    "fp32_bytes": 45224191,
+    "int8_bytes": 11430716,
+    "reduction_percent": 74.72433282443903
+  },
+  "latency": null,
+  "warmup_discarded": null,
+  "validation": {
+    "min_measurements_per_variant": 100
+  },
+  "speedup": null,
+  "status": "parcial",
+  "latency_note": "Pendiente del benchmark de la Pi (issue #11): un solo CSV con las columnas variant, repetition, warmup, latency_ms."
+}
