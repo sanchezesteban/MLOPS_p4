@@ -1,0 +1,5 @@
+outs:
+- md5: 10dfddc13c23b94f4ae26e810f5ae0eb
+  size: 45224191
+  hash: md5
+  path: model_fp32.onnx

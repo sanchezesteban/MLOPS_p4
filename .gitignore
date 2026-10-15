@@ -44,3 +44,6 @@ build/
 eval_v*/
 ref_010.csv
 recarga_*.txt
+
+# Basura de macOS.
+.DS_Store
