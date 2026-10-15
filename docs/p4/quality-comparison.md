@@ -35,6 +35,16 @@ Idénticas para los tres modelos.
 
 - **Errores de la cuantización:** `0` discrepancias entre PyTorch y ONNX INT8 (`error_analysis.disagreements = []`). El export a FP32 y la cuantización INT8 tampoco introducen diferencias respecto al modelo PyTorch.
 - **Errores propios del modelo (compartidos por los tres):** 5 de 131 muestras (3.8 %). Clases afectadas: **cat** (3 gatos clasificados como *dog*) y **dog** (2 perros clasificados como *cat*). Son límites de decisión del modelo del P3, no de la optimización.
+
+Los 5 recortes mal clasificados (de `reports/p4/quality_predictions.csv`):
+
+| `crop_id` | Real | Predicho |
+|---|---|---|
+| `000135_000153` | cat | dog |
+| `000526_000521` | cat | dog |
+| `000633_000627` | cat | dog |
+| `000289_000331` | dog | cat |
+| `000476_000467` | dog | cat |
 - Conclusión: en esta validación, **el intercambio calidad ↔ recursos es favorable** — la INT8 pesa 74.7 % menos sin perder ni una muestra (el lado de recursos se mide en #8).
 
 ## Evidencia

@@ -40,7 +40,7 @@ $ uv run --locked --no-build --group ml python edge/convert.py \
 
 ## Prueba de consistencia
 
-Una imagen de train conocida (`images/000003_000006.jpg`) da la misma clase en los tres:
+Una imagen de train conocida (`images/000003_000006.jpg`, tomada del **primer ID de `calibracion_ids.txt`**) da la misma clase en los tres:
 
 ```json
 { "pytorch_class": 0, "fp32_class": 0, "int8_class": 0, "all_agree": true }
