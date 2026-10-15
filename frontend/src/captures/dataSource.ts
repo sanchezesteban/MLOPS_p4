@@ -6,32 +6,54 @@ type CapturesState =
   | { status: "error"; message: string }
   | { status: "success"; data: CaptureEvent[] };
 
-/**
- * Base de la API de lectura. Mientras no exista la API real (issue #15) se
- * sirve un JSON de ejemplo con la forma del contrato v1. Cuando exista, basta
- * con exportar `VITE_CAPTURES_API_URL` (p. ej. el endpoint de API Gateway) y
- * este hook apunta ahí sin tocar la página.
- */
-const configuredBaseUrl = import.meta.env.VITE_CAPTURES_API_URL as string | undefined;
+const NOT_CONFIGURED_MESSAGES = "API de capturas no configurada.";
 
-export const capturesUrl =
-  configuredBaseUrl !== undefined && configuredBaseUrl.trim() !== ""
-    ? `${configuredBaseUrl.replace(/\/$/, "")}/captures?limit=50`
-    : "/captures/sample.json";
+/**
+ * Resuelve la URL de la API de lectura a partir del entorno (base de #15).
+ *
+ * En desarrollo, sin `VITE_CAPTURES_API_URL`, se sirve el JSON de ejemplo del
+ * contrato v1 para poder trabajar sin AWS. En producción **no** hay datos de
+ * ejemplo: si la URL no está configurada el estado es de error, para nunca
+ * presentar capturas simuladas como reales (retro de #38: el evaluador vería
+ * datos de ejemplo y eso vale 0 en la rúbrica).
+ *
+ * Devuelve `null` y el estado queda en error, sin hacer fetch.
+ */
+export function resolveCapturesUrl(
+  configuredBaseUrl: string | undefined,
+  isDev: boolean
+): string | null {
+  if (configuredBaseUrl !== undefined && configuredBaseUrl.trim() !== "") {
+    return `${configuredBaseUrl.replace(/\/$/, "")}/captures?limit=50`;
+  }
+  return isDev ? "/captures/sample.json" : null;
+}
+
+export const capturesUrl = resolveCapturesUrl(
+  import.meta.env.VITE_CAPTURES_API_URL,
+  import.meta.env.DEV
+);
 
 function byCapturedAtDesc(a: CaptureEvent, b: CaptureEvent): number {
   return Date.parse(b.captured_at) - Date.parse(a.captured_at);
 }
 
 /** Carga las capturas del edge y las ordena de la más reciente a la más antigua. */
-export function useCaptures() {
-  const [state, setState] = useState<CapturesState>({ status: "loading" });
+export function useCaptures(url: string | null = capturesUrl) {
+  const [state, setState] = useState<CapturesState>(
+    url === null ? { status: "error", message: NOT_CONFIGURED_MESSAGES } : { status: "loading" }
+  );
 
   const load = useCallback(() => {
+    if (url === null) {
+      setState({ status: "error", message: NOT_CONFIGURED_MESSAGES });
+      return () => {};
+    }
+
     let cancelled = false;
     setState({ status: "loading" });
 
-    fetch(capturesUrl)
+    fetch(url)
       .then(async (res) => {
         if (!res.ok) {
           throw new Error(`El servidor respondió con estado ${res.status}.`);
@@ -54,7 +76,7 @@ export function useCaptures() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [url]);
 
   useEffect(() => load(), [load]);
 

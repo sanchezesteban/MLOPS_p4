@@ -23,6 +23,14 @@ La URL es configurable con `VITE_CAPTURES_API_URL`; **#15** la apunta a la API r
 
 ![Sección «Capturas Edge» con datos de ejemplo](capturas-edge.png)
 
+## Configuración de producción
+
+En **producción no hay datos de ejemplo**: sin `VITE_CAPTURES_API_URL` la sección muestra un estado de error («API de capturas no configurada») en lugar de capturas simuladas. El valor se inyecta al construir la imagen (`--build-arg VITE_CAPTURES_API_URL=…`, ver `frontend/Dockerfile`) y debe apuntar a la API de lectura (#15).
+
+El portal tiene que fijar su **origen en `var.portal_origins`** de la infraestructura de AWS (CORS de `GET /captures`), porque el endpoint lo limita.
+
+![Sección «Capturas Edge» en producción sin API configurada](capturas-edge-sin-api.png)
+
 ## Verificación
 
 - `npm run lint`, `npm run typecheck`, `npm test` (188 pruebas, 5 nuevas) y `npm run build` → OK.

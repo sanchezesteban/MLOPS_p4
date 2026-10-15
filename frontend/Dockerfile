@@ -12,6 +12,11 @@ COPY . .
 ARG VITE_API_BASE_URL=/api
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 
+# P4-14/#15: base de la API de lectura de capturas. Vite inlínea las VITE_* en
+# build-time, así que llega por ARG al construir (docker build --build-arg).
+ARG VITE_CAPTURES_API_URL=
+ENV VITE_CAPTURES_API_URL=${VITE_CAPTURES_API_URL}
+
 RUN npm run build
 
 FROM nginx:1.27-alpine

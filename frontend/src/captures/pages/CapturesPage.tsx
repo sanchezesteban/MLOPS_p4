@@ -43,15 +43,26 @@ function CaptureCard({ capture }: Readonly<{ capture: CaptureEvent }>) {
         <p className="text-xs text-ink-muted">{formatDate(capture.captured_at)}</p>
         <dl className="mt-1 grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-xs">
           <dt className="text-ink-muted">capture_id</dt>
-          <dd className="truncate font-mono" title={capture.capture_id}>
-            {capture.capture_id.slice(0, 8)}…
-          </dd>
+          <dd className="break-all font-mono">{capture.capture_id}</dd>
           <dt className="text-ink-muted">dispositivo</dt>
           <dd className="font-mono">{capture.device_id}</dd>
           <dt className="text-ink-muted">modelo</dt>
-          <dd className="truncate font-mono" title={capture.model_version}>
+          <dd className="break-all font-mono" title={capture.model_version}>
             {capture.model_version}
           </dd>
+          {capture.crop === null ? (
+            <>
+              <dt className="text-ink-muted">recorte</dt>
+              <dd>sin recorte</dd>
+            </>
+          ) : (
+            <>
+              <dt className="text-ink-muted">recorte</dt>
+              <dd className="font-mono">
+                x {capture.crop.x} · y {capture.crop.y} · w {capture.crop.w} · h {capture.crop.h}
+              </dd>
+            </>
+          )}
         </dl>
       </div>
     </article>

@@ -1,5 +1,14 @@
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  renderHook,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { resolveCapturesUrl, useCaptures } from "../dataSource";
 import { CapturesPage } from "./CapturesPage";
 
 /**
@@ -51,6 +60,7 @@ describe("CapturesPage (P4-14)", () => {
       captured_at: "2026-10-14T09:15:02-06:00",
       predicted_class: "dog",
       confidence: 0.94,
+      crop: { x: 80, y: 40, w: 480, h: 400 },
     });
     // A propósito, la más antigua primero: la página debe reordenar.
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse({ items: [older, newer] })));
@@ -60,14 +70,22 @@ describe("CapturesPage (P4-14)", () => {
     const cards = await screen.findAllByRole("article");
     expect(cards).toHaveLength(2);
     // La primera tarjeta es la más reciente.
-    expect(within(cards[0] as HTMLElement).getByText("bbbbbbbb…")).toBeInTheDocument();
-    expect(within(cards[1] as HTMLElement).getByText("aaaaaaaa…")).toBeInTheDocument();
+    expect(
+      within(cards[0] as HTMLElement).getByText("bbbbbbbb-2222-4222-8222-222222222222")
+    ).toBeInTheDocument();
+    expect(
+      within(cards[1] as HTMLElement).getByText("aaaaaaaa-1111-4111-8111-111111111111")
+    ).toBeInTheDocument();
 
     // Campos del contrato visibles.
     expect(screen.getByText("Perro")).toBeInTheDocument();
     expect(screen.getByText("94%")).toBeInTheDocument();
     expect(screen.getAllByText("rpi-zero2w-01").length).toBeGreaterThan(0);
     expect(screen.getAllByText("resnet18-p3-v1.0.0-int8").length).toBeGreaterThan(0);
+    // El `capture_id` va completo (#38, criterio 5.2: el evaluador lo compara
+    // entre la Pi, AWS y el portal) y el `crop` muestra sus coordenadas.
+    expect(screen.getByText("x 80 · y 40 · w 480 · h 400")).toBeInTheDocument();
+    expect(screen.getByText("sin recorte")).toBeInTheDocument();
   });
 
   it("refresca al presionar «Actualizar»", async () => {
@@ -113,5 +131,29 @@ describe("CapturesPage (P4-14)", () => {
     render(<CapturesPage />);
 
     expect(await screen.findByText("No se pudieron cargar las capturas")).toBeInTheDocument();
+  });
+});
+
+describe("producción sin VITE_CAPTURES_API_URL (P4-14)", () => {
+  it("en dev sirve el JSON de ejemplo y en producción, sin URL, no hay ejemplo", () => {
+    expect(resolveCapturesUrl(undefined, true)).toBe("/captures/sample.json");
+    expect(resolveCapturesUrl("", false)).toBeNull();
+    expect(resolveCapturesUrl(undefined, false)).toBeNull();
+    expect(resolveCapturesUrl("https://api.ejemplo.com/", false)).toBe(
+      "https://api.ejemplo.com/captures?limit=50"
+    );
+  });
+
+  it("sin URL configurada el estado es de error y no se hace ningún fetch", () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { result } = renderHook(() => useCaptures(null));
+
+    expect(result.current).toMatchObject({
+      status: "error",
+      message: "API de capturas no configurada.",
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });
