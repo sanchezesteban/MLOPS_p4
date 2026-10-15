@@ -321,8 +321,9 @@ uv run python -m edge_ingest.evidence --profile <admin> cleanup --device-id simu
 ```
 
 Las 8 capturas del primer ensayo del simulador (2026-10-14 04:27–04:30 UTC) se enviaron antes
-de que el simulador tuviera `device_id` propio, así que quedaron como `rpi-zero2w-01`. Se borran
-por ID antes de que la Pi real empiece a enviar.
+de que el simulador tuviera `device_id` propio, así que quedaron como `rpi-zero2w-01`. Se borraron
+el 2026-10-14 con `cleanup --device-id rpi-zero2w-01 --confirm`; la tabla y el bucket quedaron vacíos
+para las capturas reales de la Pi.
 
 ### Configuración de la Pi sin secretos
 
@@ -330,3 +331,42 @@ Plantilla: `app/edge/.env.pi.example`. Se copia a `app/edge/.env.pi`, que Git ig
 patrón `.env.*`. Incluye `DEVICE_ID`, la ruta y el SHA-256 del modelo INT8, el recorte, el
 intervalo de captura, la URL de la API y el **nombre** del perfil AWS. La llave se configura con
 `aws configure --profile mlops-p4-device` y nunca va en el archivo.
+
+## Portal en AWS (#18)
+
+**URL:** `http://3.133.248.228` (IP elástica: no cambia al apagar y prender la instancia).
+
+La rúbrica (5.1, M3) pide que «Capturas Edge» esté en la navegación del portal de P1–P3
+**desplegado en AWS**. El portal solo corría con `docker compose` local, así que se despliega
+en una EC2 con el mismo compose (`terraform/p4/portal.tf`):
+
+| Pieza | Valor |
+|---|---|
+| Instancia | `mlops-p4-portal`, `t3.small`, Ubuntu 24.04, disco gp3 de 30 GB cifrado, IMDSv2, 4 GB de swap |
+| Red | VPC por defecto (`us-east-2a`); security group solo con **HTTP 80** de entrada |
+| Administración | SSM Session Manager (rol `AmazonSSMManagedInstanceCore`); sin SSH ni llaves |
+| Servicios | `frontend` (nginx, puerto 80), `backend`, `mariadb`, `minio`, `copilot` — `restart: unless-stopped` |
+| Fuera de alcance | `trainer-worker`, `ml-api`, `mlflow` (entrenamiento del P3 con PyTorch; el P4 no lo recalifica). Sus secciones responden 502 |
+| Secretos | Contraseñas de MariaDB y MinIO generadas en la instancia (`/opt/portal/.env`, modo 600); no están en Terraform ni en Git. Copilot sin `ANTHROPIC_API_KEY` responde 503 |
+| MinIO | `minio/minio` y `quay.io/minio/minio` ya no se pueden descargar; en AWS se usa `cgr.dev/chainguard/minio` (mismo comando y variables), solo en el override de la EC2 |
+| «Capturas Edge» | El frontend se compila con `VITE_CAPTURES_API_URL` = URL de la API; el CORS de `GET /captures` incluye `http://3.133.248.228` |
+
+Al arrancar por primera vez, la instancia instala Docker, clona `main` y ejecuta
+`/usr/local/bin/portal-deploy` (`git pull` + `docker compose up -d --build` de esos servicios).
+El log queda en `/var/log/portal-bootstrap.log`.
+
+### Operación
+
+```bash
+AWS_PROFILE=<admin> bash scripts/p4_portal.sh deploy main   # actualizar tras un merge (p. ej. #15)
+AWS_PROFILE=<admin> bash scripts/p4_portal.sh status        # EC2 + contenedores + commit desplegado
+AWS_PROFILE=<admin> bash scripts/p4_portal.sh logs          # log de arranque
+AWS_PROFILE=<admin> bash scripts/p4_portal.sh stop          # apagar fuera de la demo (ahorra cómputo)
+AWS_PROFILE=<admin> bash scripts/p4_portal.sh start         # prender antes de la demo (~1 min)
+```
+
+Comprobado el 2026-10-14: `/` y `/api/health` → 200, `/reports/quality.json` → 200, `/ml-api/` → 502
+(fuera de alcance). Tras reiniciar la EC2, el portal volvió solo en ~45 s.
+
+Costo aproximado: `t3.small` ≈ USD 0.02/h encendida + IP pública ≈ USD 0.005/h + 30 GB gp3
+≈ USD 2.4/mes. Apagada solo cuesta el disco y la IP.

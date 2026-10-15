@@ -45,3 +45,12 @@ output "console_signin_url" {
 output "read_function" {
   value = aws_lambda_function.read.function_name
 }
+
+output "portal_url" {
+  description = "URL pública del portal (5.1, M3)."
+  value       = "http://${aws_eip.portal.public_ip}"
+}
+
+output "portal_instance_id" {
+  value = aws_instance.portal.id
+}
