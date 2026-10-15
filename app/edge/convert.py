@@ -116,9 +116,21 @@ def run_onnx(path: Path, tensor: torch.Tensor) -> int:
     return int(np.argmax(logits, axis=1)[0])
 
 
-def consistency_check(model: torch.nn.Module, fp32: Path, int8: Path, crops_root: Path) -> dict:
-    """Una imagen de train conocida: misma clase en PyTorch, FP32 e INT8."""
-    sample = next(path for path in sorted(crops_root.glob("images/*.jpg")))
+def consistency_check(
+    model: torch.nn.Module, fp32: Path, int8: Path, crops_root: Path, calibration_ids: Path
+) -> dict:
+    """Una imagen de train conocida: misma clase en PyTorch, FP32 e INT8.
+
+    La muestra es el **primer ID de `calibracion_ids.txt`** (fuente de verdad
+    de la calibración), no el primer archivo de la carpeta: así la evidencia
+    siempre proviene de los datos usados para cuantizar.
+    """
+    ids = [line.strip() for line in calibration_ids.read_text(encoding="utf-8").splitlines()]
+    if not ids:
+        raise ValueError(f"{calibration_ids} está vacío: no hay calibración registrada.")
+    sample = crops_root / "images" / f"{ids[0]}.jpg"
+    if not sample.is_file():
+        raise FileNotFoundError(f"El recorte de calibración no existe: {sample}")
     transform = get_preprocessing_transforms("val", R02_CONFIG.image_size)
     tensor = transform(Image.open(sample).convert("RGB")).unsqueeze(0)
     with torch.no_grad():
@@ -127,6 +139,7 @@ def consistency_check(model: torch.nn.Module, fp32: Path, int8: Path, crops_root
     int8_class = run_onnx(int8, tensor)
     return {
         "sample": str(sample.relative_to(crops_root)),
+        "calibration_source": str(calibration_ids),
         "pytorch_class": pytorch_class,
         "fp32_class": fp32_class,
         "int8_class": int8_class,
@@ -176,7 +189,9 @@ def main() -> None:
 
     onnx.checker.check_model(onnx.load(str(fp32_path)))
     onnx.checker.check_model(onnx.load(str(int8_path)))
-    consistency = consistency_check(model, fp32_path, int8_path, args.crops_root)
+    consistency = consistency_check(
+        model, fp32_path, int8_path, args.crops_root, args.report_dir / "calibracion_ids.txt"
+    )
 
     log = {
         "checkpoint": {"path": str(args.checkpoint), "sha256": sha256_file(args.checkpoint)},
