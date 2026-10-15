@@ -8,8 +8,12 @@ de conversión (issue #5):
 - reducción de tamaño = 100 * (tamaño_fp32 - tamaño_int8) / tamaño_fp32;
 - aceleración, solo cuando supera la variabilidad de las mediciones.
 
-El CSV del benchmark debe tener las columnas `variant` (`fp32` | `int8`) y
-`latency_ms` (preprocesamiento + inferencia, **sin** envío). Ver
+El CSV del benchmark es **un solo archivo** con una fila por medición y las
+columnas `variant` (`fp32` | `int8`), `repetition` (1..N), `warmup`
+(`true`/`false`) y `latency_ms` (preprocesamiento + inferencia, sin envío).
+Las filas de calentamiento (`warmup=true`) se **identifican, excluyen y
+contabilizan**, y cada variante debe conservar al menos
+`MIN_MEASUREMENTS_PER_VARIANT` mediciones válidas. Ver
 `docs/p4/reporte-optimizacion.md`.
 
 Uso (desde `app/`):
@@ -34,6 +38,8 @@ import numpy as np
 
 VARIANTS = ("fp32", "int8")
 PERCENTILE_METHOD = "numpy.percentile con interpolación lineal (method='linear')"
+MIN_MEASUREMENTS_PER_VARIANT = 100
+REQUIRED_COLUMNS = {"variant", "repetition", "warmup", "latency_ms"}
 
 
 def percentile(values: list[float], q: float) -> float:
@@ -58,19 +64,50 @@ def size_reduction_percent(fp32_bytes: int, int8_bytes: int) -> float:
     return 100.0 * (fp32_bytes - int8_bytes) / fp32_bytes
 
 
-def read_benchmark(path: Path) -> dict[str, list[float]]:
-    """Agrupa `latency_ms` por `variant` a partir del CSV de la Pi."""
-    grouped: dict[str, list[float]] = defaultdict(list)
+def read_benchmark(path: Path) -> dict[str, dict[str, dict[str, int] | list[float]]]:
+    """Lee el benchmark de la Pi e identifica/excluye el calentamiento.
+
+    Devuelve `{"measurements": {variante: [latencies]}, "warmup_discarded":
+    {variante: filas_descartadas}}`. El calentamiento (`warmup=true`) no
+    cuenta como medición válida y se reporta aparte; si una variante queda
+    con menos de `MIN_MEASUREMENTS_PER_VARIANT` filas válidas, falla.
+    """
+    measurements: dict[str, list[float]] = defaultdict(list)
+    discarded: dict[str, int] = dict.fromkeys(VARIANTS, 0)
+
     with path.open(newline="", encoding="utf-8") as handle:
         reader = csv.DictReader(handle)
-        if reader.fieldnames is None or {"variant", "latency_ms"} - set(reader.fieldnames):
-            raise ValueError("El CSV debe tener las columnas 'variant' y 'latency_ms'.")
+        columns = set(reader.fieldnames or [])
+        missing_columns = REQUIRED_COLUMNS - columns
+        if missing_columns:
+            raise ValueError(
+                "El CSV debe ser un solo archivo con las columnas "
+                f"{sorted(REQUIRED_COLUMNS)}; faltan: {sorted(missing_columns)}."
+            )
         for row in reader:
-            variant = row["variant"].strip()
+            variant = (row["variant"] or "").strip()
             if variant not in VARIANTS:
                 raise ValueError(f"variant desconocido: {variant!r}")
-            grouped[variant].append(float(row["latency_ms"]))
-    return dict(grouped)
+            warmup = (row["warmup"] or "").strip().lower()
+            if warmup not in {"true", "false"}:
+                raise ValueError(f"warmup debe ser true/false, recibió: {row['warmup']!r}")
+            int(row["repetition"])  # la numeración debe ser parseable, aunque no la usemos
+            if warmup == "true":
+                discarded[variant] += 1
+                continue
+            measurements[variant].append(float(row["latency_ms"]))
+
+    for variant in VARIANTS:
+        valid = len(measurements.get(variant, []))
+        if valid < MIN_MEASUREMENTS_PER_VARIANT:
+            raise ValueError(
+                f"{variant}: solo {valid} mediciones válidas de "
+                f"{MIN_MEASUREMENTS_PER_VARIANT} requeridas, después de excluir el calentamiento."
+            )
+    return {
+        "measurements": dict(measurements),
+        "warmup_discarded": {variant: discarded[variant] for variant in VARIANTS},
+    }
 
 
 def speedup(fp32: dict, int8: dict) -> dict:
@@ -107,18 +144,21 @@ def build_report(conversion_log: Path, benchmark: Path | None) -> dict:
             "reduction_percent": size_reduction_percent(fp32_bytes, int8_bytes),
         },
         "latency": None,
+        "warmup_discarded": None,
+        "validation": {"min_measurements_per_variant": MIN_MEASUREMENTS_PER_VARIANT},
         "speedup": None,
         "status": "parcial",
-        "latency_note": "Pendiente del benchmark de la Pi (issue #11).",
+        "latency_note": (
+            "Pendiente del benchmark de la Pi (issue #11): un solo CSV con las columnas "
+            "variant, repetition, warmup, latency_ms."
+        ),
     }
 
     if benchmark is not None and benchmark.is_file():
         grouped = read_benchmark(benchmark)
-        missing = [variant for variant in VARIANTS if variant not in grouped]
-        if missing:
-            raise ValueError(f"Faltan mediciones para: {', '.join(missing)}.")
-        latency = {variant: latency_stats(grouped[variant]) for variant in VARIANTS}
+        latency = {variant: latency_stats(grouped["measurements"][variant]) for variant in VARIANTS}
         report["latency"] = latency
+        report["warmup_discarded"] = grouped["warmup_discarded"]
         report["speedup"] = speedup(latency["fp32"], latency["int8"])
         report["status"] = "completo"
         report["latency_note"] = None
