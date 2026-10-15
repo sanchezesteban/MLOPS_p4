@@ -1,0 +1,14 @@
+{
+  "device_id": "rpi-zero2w-01",
+  "model_path": "models/model_int8.onnx",
+  "model_version": "resnet18-p3-v1.0.0-int8",
+  "classes": { "0": "cat", "1": "dog" },
+  "image_size": 128,
+  "crop": { "x": 0, "y": 0, "w": 0, "h": 0 },
+  "frame_source": "stub",
+  "stub_image_path": "stub_frame.jpg",
+  "camera_index": 0,
+  "capture_mode": "interval",
+  "capture_interval_seconds": 5,
+  "output_dir": "capturas"
+}

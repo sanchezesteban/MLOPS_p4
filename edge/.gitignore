@@ -1,0 +1,4 @@
+config.json
+capturas/
+models/*.onnx
+__pycache__/
