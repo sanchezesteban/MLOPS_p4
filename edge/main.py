@@ -31,9 +31,20 @@ def _load_config(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def _crop_or_null(crop: dict) -> dict | None:
+    """El contrato del evento (docs/p4/contrato-evento.md) pide `w`/`h` > 0 o
+    `null` -- la ingesta de Ikram rechaza {"x":0,"y":0,"w":0,"h":0} con 400."""
+    if crop.get("w", 0) <= 0 or crop.get("h", 0) <= 0:
+        return None
+    return crop
+
+
 def _run_once(config: dict, model: Model, frame_source, output_dir: Path) -> dict:
-    t0 = time.perf_counter()
+    # El cronómetro arranca DESPUÉS de leer la cámara: `latency_ms` es solo
+    # preprocesamiento + inferencia, como pide el contrato -- leer la cámara
+    # no cuenta (con cámara real eso agrega ~300ms que no son del modelo).
     frame = frame_source.read()
+    t0 = time.perf_counter()
     model_input = to_model_input(frame, config["crop"], config.get("image_size", 128))
     preprocess_ms = (time.perf_counter() - t0) * 1000
 
@@ -52,7 +63,7 @@ def _run_once(config: dict, model: Model, frame_source, output_dir: Path) -> dic
         "predicted_class": classes[str(predicted)],
         "confidence": round(confidence, 4),
         "latency_ms": round(preprocess_ms + infer_ms, 2),
-        "crop": config["crop"],
+        "crop": _crop_or_null(config["crop"]),
     }
 
     output_dir.mkdir(parents=True, exist_ok=True)

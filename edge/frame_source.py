@@ -35,16 +35,24 @@ class StubFrameSource(FrameSource):
 class CameraFrameSource(FrameSource):
     """Cámara real vía V4L2 (OpenCV). Requiere `/dev/video0` detectado (P4-03)."""
 
+    # Frames a descartar antes de leer el real: OpenCV guarda un búfer interno,
+    # así que el primer read() después de esperar (modo "key") puede devolver
+    # un frame viejo, de antes de que el objeto estuviera frente a la cámara.
+    _STALE_FRAMES_TO_DISCARD = 4
+
     def __init__(self, device_index: int = 0):
         import cv2
 
         self._cap = cv2.VideoCapture(device_index)
         if not self._cap.isOpened():
             raise RuntimeError(f"No se pudo abrir la cámara en el índice {device_index}")
+        self._cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
 
     def read(self) -> np.ndarray:
         import cv2
 
+        for _ in range(self._STALE_FRAMES_TO_DISCARD):
+            self._cap.grab()
         ok, frame_bgr = self._cap.read()
         if not ok:
             raise RuntimeError("No se pudo leer un frame de la cámara")
