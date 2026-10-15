@@ -118,7 +118,11 @@ captures/
 **`GET /captures?limit=50`** devuelve las capturas de la más reciente a la más antigua
 (por `captured_at` normalizado a UTC). Si dos capturas tienen el mismo `captured_at`, el
 portal desempata por `received_at` (más reciente primero). Cada elemento trae todos los campos del evento, excepto `image_b64`,
-más `image_url`: una URL firmada de S3 válida por 15 minutos. Expira: el portal la renueva
+más `image_url`: una URL firmada de S3 válida por 15 minutos. Al expirar, el portal la
+renueva volviendo a pedir `GET /captures` (botón «Actualizar»).
+
+Si dos capturas tienen el mismo `captured_at`, su orden relativo no está garantizado;
+con una sola Pi capturando por botón o intervalo no ocurre en la práctica. Expira: el portal la renueva
 volviendo a pedir `GET /captures` (botón «Actualizar» o refresco automático); no debe
 guardarla.
 
@@ -157,4 +161,5 @@ El portal muestra como mínimo: foto, clase, confianza, `captured_at`, `capture_
 | Versión | Fecha | Cambio |
 |---|---|---|
 | v1 | 2026-10-13 | Versión inicial (issue #1) |
+| v1 | 2026-10-14 | Aclaraciones de la revisión de Uriel: `confidence` es softmax; vigencia de `image_url`; empates de orden. Sin cambios de campos. |
 | v1 | 2026-10-14 | Aclaraciones de la revisión (sin cambiar campos): `confidence` = softmax, desempate por `received_at`, expiración de `image_url` |
