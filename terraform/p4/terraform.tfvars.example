@@ -1,0 +1,8 @@
+# Copia a terraform.tfvars (ignorado por Git) y ajusta.
+budget_emails = ["tu-correo@ejemplo.com"]
+
+# Opcionales (valores por defecto en variables.tf):
+# region           = "us-east-2"
+# budget_limit_usd = 10
+# team_members     = ["uriel", "juanpablo", "esteban"]
+# device_id        = "rpi-zero2w-01"
