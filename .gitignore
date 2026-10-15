@@ -44,3 +44,4 @@ build/
 eval_v*/
 ref_010.csv
 recarga_*.txt
+.DS_Store
