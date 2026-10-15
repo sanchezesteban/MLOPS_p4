@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200" role="img" aria-label="Gato de ejemplo">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#c9bcef"/>
+      <stop offset="1" stop-color="#8f78d9"/>
+    </linearGradient>
+  </defs>
+  <rect width="320" height="200" fill="url(#bg)"/>
+  <g fill="#fdfcff">
+    <polygon points="112,84 92,36 142,62"/>
+    <polygon points="208,84 228,36 178,62"/>
+    <circle cx="160" cy="118" r="56"/>
+  </g>
+  <g stroke="#fdfcff" stroke-width="3" stroke-linecap="round">
+    <line x1="86" y1="120" x2="118" y2="123"/>
+    <line x1="86" y1="132" x2="118" y2="128"/>
+    <line x1="234" y1="120" x2="202" y2="123"/>
+    <line x1="234" y1="132" x2="202" y2="128"/>
+  </g>
+  <g fill="#3b3350">
+    <circle cx="140" cy="110" r="7"/>
+    <circle cx="180" cy="110" r="7"/>
+    <polygon points="160,124 151,136 169,136"/>
+  </g>
+  <text x="160" y="188" text-anchor="middle" font-family="system-ui, sans-serif" font-size="13" fill="#fdfcff">gato (ejemplo)</text>
+</svg>

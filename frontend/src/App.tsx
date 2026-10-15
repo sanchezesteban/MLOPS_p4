@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from "react-router-dom";
+import { CapturesPage } from "@/captures/pages/CapturesPage";
 import { AnnotateScreen } from "@/components/annotate/AnnotateScreen";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { UploadScreen } from "@/components/upload/UploadScreen";
@@ -147,6 +148,17 @@ export function App(): JSX.Element {
         element={
           <AppLayout>
             <InferencePage />
+          </AppLayout>
+        }
+      />
+
+      {/* P4-14: capturas del edge (Pi -> AWS). Mismo AppLayout/GlobalNav que
+          el resto; con datos de ejemplo hasta que exista la API (#15). */}
+      <Route
+        path="/captures"
+        element={
+          <AppLayout>
+            <CapturesPage />
           </AppLayout>
         }
       />

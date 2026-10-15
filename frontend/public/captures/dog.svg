@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200" role="img" aria-label="Perro de ejemplo">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#9fd8c6"/>
+      <stop offset="1" stop-color="#3f9d8f"/>
+    </linearGradient>
+  </defs>
+  <rect width="320" height="200" fill="url(#bg)"/>
+  <g fill="#fdfcff">
+    <ellipse cx="108" cy="112" rx="26" ry="46"/>
+    <ellipse cx="212" cy="112" rx="26" ry="46"/>
+    <circle cx="160" cy="116" r="56"/>
+  </g>
+  <g fill="#26433d">
+    <circle cx="140" cy="108" r="7"/>
+    <circle cx="180" cy="108" r="7"/>
+    <ellipse cx="160" cy="126" rx="10" ry="8"/>
+  </g>
+  <path d="M150 140 q10 14 20 0" fill="#ef7c8e"/>
+  <text x="160" y="188" text-anchor="middle" font-family="system-ui, sans-serif" font-size="13" fill="#fdfcff">perro (ejemplo)</text>
+</svg>
