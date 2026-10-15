@@ -37,3 +37,39 @@ variable "budget_emails" {
     error_message = "Define al menos un correo en budget_emails."
   }
 }
+
+variable "evaluator_access_until" {
+  description = "Fecha (UTC, ISO-8601) en que expira el acceso de solo lectura del evaluador."
+  type        = string
+  default     = "2026-11-15T23:59:59Z"
+}
+
+variable "portal_origins" {
+  description = "Orígenes del portal que pueden consultar GET /captures desde el navegador (CORS)."
+  type        = list(string)
+  default     = ["http://localhost:8080", "http://localhost:5173"]
+}
+
+variable "portal_instance_type" {
+  description = "Tipo de la EC2 del portal."
+  type        = string
+  default     = "t3.small"
+}
+
+variable "portal_repo_url" {
+  description = "Repositorio público que clona la EC2 del portal."
+  type        = string
+  default     = "https://github.com/sanchezesteban/MLOPS_p4.git"
+}
+
+variable "portal_git_ref" {
+  description = "Rama que despliega la EC2 al arrancar (luego: scripts/p4_portal_deploy.sh <rama>)."
+  type        = string
+  default     = "main"
+}
+
+variable "portal_allowed_cidrs" {
+  description = "Redes que pueden abrir el portal por HTTP (por defecto, cualquiera: el evaluador entra desde fuera)."
+  type        = list(string)
+  default     = ["0.0.0.0/0"]
+}

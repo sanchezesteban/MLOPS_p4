@@ -18,6 +18,12 @@ resource "aws_iam_user" "team" {
 
   name = "${var.name_prefix}-${each.key}"
   path = "/${var.name_prefix}/"
+
+  # La consola guarda la descripción de cada access key como etiqueta del usuario;
+  # Terraform no las administra.
+  lifecycle {
+    ignore_changes = [tags]
+  }
 }
 
 resource "aws_iam_user_group_membership" "team" {
@@ -83,6 +89,12 @@ resource "aws_iam_group_policy" "team" {
 resource "aws_iam_user" "device" {
   name = "${var.name_prefix}-device-${var.device_id}"
   path = "/${var.name_prefix}/"
+
+  # La consola guarda la descripción de cada access key como etiqueta del usuario;
+  # Terraform no las administra.
+  lifecycle {
+    ignore_changes = [tags]
+  }
 }
 
 data "aws_iam_policy_document" "device" {

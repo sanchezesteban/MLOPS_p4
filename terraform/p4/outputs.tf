@@ -24,3 +24,33 @@ output "team_users" {
 output "device_user" {
   value = aws_iam_user.device.name
 }
+
+output "api_url" {
+  description = "URL base de la API de capturas (POST /captures con SigV4)."
+  value       = aws_apigatewayv2_api.captures.api_endpoint
+}
+
+output "ingest_function" {
+  value = aws_lambda_function.ingest.function_name
+}
+
+output "evaluator_user" {
+  value = aws_iam_user.evaluator.name
+}
+
+output "console_signin_url" {
+  value = "https://${local.account_id}.signin.aws.amazon.com/console"
+}
+
+output "read_function" {
+  value = aws_lambda_function.read.function_name
+}
+
+output "portal_url" {
+  description = "URL pública del portal (5.1, M3)."
+  value       = "http://${aws_eip.portal.public_ip}"
+}
+
+output "portal_instance_id" {
+  value = aws_instance.portal.id
+}
