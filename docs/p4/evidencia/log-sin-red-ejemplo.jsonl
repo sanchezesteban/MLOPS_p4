@@ -1,0 +1,32 @@
+{"capture_id": "306978be-7124-4eb3-8385-149b88cefb0a", "logged_at": "2026-10-16T00:23:57.181729-06:00", "send_status": "pendiente", "send_error": null, "send_ms": null}
+{"capture_id": "306978be-7124-4eb3-8385-149b88cefb0a", "logged_at": "2026-10-16T00:23:57.617421-06:00", "send_status": "error", "send_error": "0 sin conexión: [Errno -3] Temporary failure in name resolution", "send_ms": 434.6}
+{"capture_id": "43c76daf-1adf-4275-96ca-3d0ef3500d03", "logged_at": "2026-10-16T00:24:03.026029-06:00", "send_status": "pendiente", "send_error": null, "send_ms": null}
+{"capture_id": "43c76daf-1adf-4275-96ca-3d0ef3500d03", "logged_at": "2026-10-16T00:24:03.114056-06:00", "send_status": "error", "send_error": "0 sin conexión: [Errno -3] Temporary failure in name resolution", "send_ms": 87.2}
+{"capture_id": "4773c736-d64b-4b26-bd6f-d4aa8ecfdc99", "logged_at": "2026-10-16T00:24:08.481628-06:00", "send_status": "pendiente", "send_error": null, "send_ms": null}
+{"capture_id": "4773c736-d64b-4b26-bd6f-d4aa8ecfdc99", "logged_at": "2026-10-16T00:24:08.565289-06:00", "send_status": "error", "send_error": "0 sin conexión: [Errno -3] Temporary failure in name resolution", "send_ms": 82.8}
+{"capture_id": "4950d983-2c87-43a7-8b89-43442eb8b87c", "logged_at": "2026-10-16T00:24:13.948267-06:00", "send_status": "pendiente", "send_error": null, "send_ms": null}
+{"capture_id": "4950d983-2c87-43a7-8b89-43442eb8b87c", "logged_at": "2026-10-16T00:24:14.034627-06:00", "send_status": "error", "send_error": "0 sin conexión: [Errno -3] Temporary failure in name resolution", "send_ms": 85.5}
+{"capture_id": "2c8eeb3f-2c7e-4c77-9977-8d518981d3eb", "logged_at": "2026-10-16T00:24:19.415332-06:00", "send_status": "pendiente", "send_error": null, "send_ms": null}
+{"capture_id": "2c8eeb3f-2c7e-4c77-9977-8d518981d3eb", "logged_at": "2026-10-16T00:24:19.500492-06:00", "send_status": "error", "send_error": "0 sin conexión: [Errno -3] Temporary failure in name resolution", "send_ms": 84.2}
+{"capture_id": "b8fe51ca-c5ff-4f5d-8fd9-0569ff4c5fc3", "logged_at": "2026-10-16T00:24:24.893848-06:00", "send_status": "pendiente", "send_error": null, "send_ms": null}
+{"capture_id": "b8fe51ca-c5ff-4f5d-8fd9-0569ff4c5fc3", "logged_at": "2026-10-16T00:24:24.980076-06:00", "send_status": "error", "send_error": "0 sin conexión: [Errno -3] Temporary failure in name resolution", "send_ms": 85.2}
+{"capture_id": "479f8dd8-40f4-4899-b061-c1a48f509a25", "logged_at": "2026-10-16T00:24:30.457533-06:00", "send_status": "pendiente", "send_error": null, "send_ms": null}
+{"capture_id": "479f8dd8-40f4-4899-b061-c1a48f509a25", "logged_at": "2026-10-16T00:24:30.566224-06:00", "send_status": "error", "send_error": "0 sin conexión: [Errno -3] Temporary failure in name resolution", "send_ms": 104.7}
+{"capture_id": "b710c703-1544-4fa2-a7ad-70807bf3be59", "logged_at": "2026-10-16T00:24:36.256423-06:00", "send_status": "pendiente", "send_error": null, "send_ms": null}
+{"capture_id": "b710c703-1544-4fa2-a7ad-70807bf3be59", "logged_at": "2026-10-16T00:24:37.546767-06:00", "send_status": "enviado", "send_error": null, "send_ms": 1287.7}
+{"capture_id": "8eef673d-b532-4c53-9496-cdfd8f6bfa4a", "logged_at": "2026-10-16T00:24:42.946237-06:00", "send_status": "pendiente", "send_error": null, "send_ms": null}
+{"capture_id": "8eef673d-b532-4c53-9496-cdfd8f6bfa4a", "logged_at": "2026-10-16T00:24:43.422988-06:00", "send_status": "enviado", "send_error": null, "send_ms": 475.9}
+{"capture_id": "306978be-7124-4eb3-8385-149b88cefb0a", "logged_at": "2026-10-16T00:25:00.873334-06:00", "send_status": "pendiente", "send_error": null, "send_ms": null}
+{"capture_id": "306978be-7124-4eb3-8385-149b88cefb0a", "logged_at": "2026-10-16T00:25:01.606660-06:00", "send_status": "enviado", "send_error": null, "send_ms": 732.2}
+{"capture_id": "43c76daf-1adf-4275-96ca-3d0ef3500d03", "logged_at": "2026-10-16T00:25:01.611246-06:00", "send_status": "pendiente", "send_error": null, "send_ms": null}
+{"capture_id": "43c76daf-1adf-4275-96ca-3d0ef3500d03", "logged_at": "2026-10-16T00:25:02.133072-06:00", "send_status": "enviado", "send_error": null, "send_ms": 520.5}
+{"capture_id": "4773c736-d64b-4b26-bd6f-d4aa8ecfdc99", "logged_at": "2026-10-16T00:25:02.136460-06:00", "send_status": "pendiente", "send_error": null, "send_ms": null}
+{"capture_id": "4773c736-d64b-4b26-bd6f-d4aa8ecfdc99", "logged_at": "2026-10-16T00:25:02.705969-06:00", "send_status": "enviado", "send_error": null, "send_ms": 568.6}
+{"capture_id": "4950d983-2c87-43a7-8b89-43442eb8b87c", "logged_at": "2026-10-16T00:25:02.709325-06:00", "send_status": "pendiente", "send_error": null, "send_ms": null}
+{"capture_id": "4950d983-2c87-43a7-8b89-43442eb8b87c", "logged_at": "2026-10-16T00:25:03.190880-06:00", "send_status": "enviado", "send_error": null, "send_ms": 480.7}
+{"capture_id": "2c8eeb3f-2c7e-4c77-9977-8d518981d3eb", "logged_at": "2026-10-16T00:25:03.194294-06:00", "send_status": "pendiente", "send_error": null, "send_ms": null}
+{"capture_id": "2c8eeb3f-2c7e-4c77-9977-8d518981d3eb", "logged_at": "2026-10-16T00:25:03.685616-06:00", "send_status": "enviado", "send_error": null, "send_ms": 490.5}
+{"capture_id": "b8fe51ca-c5ff-4f5d-8fd9-0569ff4c5fc3", "logged_at": "2026-10-16T00:25:03.689122-06:00", "send_status": "pendiente", "send_error": null, "send_ms": null}
+{"capture_id": "b8fe51ca-c5ff-4f5d-8fd9-0569ff4c5fc3", "logged_at": "2026-10-16T00:25:04.175217-06:00", "send_status": "enviado", "send_error": null, "send_ms": 485.2}
+{"capture_id": "479f8dd8-40f4-4899-b061-c1a48f509a25", "logged_at": "2026-10-16T00:25:04.178524-06:00", "send_status": "pendiente", "send_error": null, "send_ms": null}
+{"capture_id": "479f8dd8-40f4-4899-b061-c1a48f509a25", "logged_at": "2026-10-16T00:25:04.757083-06:00", "send_status": "enviado", "send_error": null, "send_ms": 577.7}
