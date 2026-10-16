@@ -1,87 +1,68 @@
-# P4-13 — Estabilidad: procedimiento (pendiente de correr con la Pi física)
+# P4-13 — Estabilidad: 5 minutos, reinicio y 20 capturas
 
 **Issue:** [#13](https://github.com/sanchezesteban/MLOPS_p4/issues/13) · **Responsable:** Juan Pablo (@jpdelmuro)
 **Ámbito:** rúbrica 2.4.
 
-## Estado
+## Estado: completo
 
-**No ejecutado todavía.** La Raspberry Pi está en casa; este documento deja el procedimiento listo
-y probado en sus partes (scripts verificados por separado) para correrlo completo en cuanto haya
-acceso físico -- ya sea antes del ensayo de las 16:00 o durante él, que de todas formas requiere
-tener la Pi, la cámara, el adaptador OTG y la fuente en el mismo lugar.
+Ejecutado en la Pi física (Zero 2W + cámara Logitech C920), no en la laptop ni con un video
+simulado -- el criterio depende de la cámara real funcionando sin caerse.
 
-No se usó la cámara de la laptop ni un video simulado como atajo: el criterio depende de la cámara
-real conectada a la Pi funcionando sin caerse, así que correrlo en otro dispositivo no demostraría
-nada sobre la Zero 2W.
+## Un bug real encontrado y corregido en el camino
 
-## Procedimiento
+El primer intento (5 minutos pedidos) se cortó solo a los ~1 min 47 s, sin ningún error visible.
+Investigando: `main.py` solo atrapaba `KeyboardInterrupt` en el loop continuo -- cualquier otra
+excepción (sospecha más probable: un glitch transitorio de la cámara USB) tumbaba **todo el
+programa**, no solo esa captura, sin dejar rastro. Es exactamente el tipo de falla que esta prueba
+está diseñada para encontrar.
 
-### 1. 20 capturas repartidas entre gato y perro, en operación continua
+Corrección en `edge/main.py`: cada vuelta del loop ahora atrapa cualquier excepción, la registra en
+`capturas/errors.log` con traceback completo, y sigue con la siguiente captura en vez de morir. Ver
+el commit `ecac8d2` en la rama `p4-12-envio-aws` (de ahí parte esta rama).
 
-```bash
-cd ~/edge
-rm -rf capturas   # opcional, para que la cuenta de esta corrida sea limpia
-tmux new-session -d -s edge '~/edge-venv/bin/python main.py --config config.json'
+También se descubrió por el camino que la primera ronda de fotos (mostrando el dataset del teléfono
+a la cámara) clasificaba mal sistemáticamente: las fotos del teléfono quedaban con barras negras
+(bisel + fondo) dentro del cuadro, diluyendo al animal en el resize a 128×128. Corregido ajustando
+el encuadre físico del teléfono (llenando el cuadro, sin barras) -- verificado con 10 fotos de
+prueba sin enviar (9/10 correctas, confianzas 0.52-1.00) antes de la corrida oficial.
+
+## Resultado de la corrida real (segundo intento, con el fix)
+
+- **Inicio:** 2026-10-16 12:44:47 (CST). **Detenida manualmente con Ctrl+C** tras cumplirse los 5
+  minutos -- `main.py` imprimió "Detenido por el usuario." (cierre limpio por `KeyboardInterrupt`,
+  no un crash).
+- **55 capturas** durante la sesión continua (muy por arriba de las 20 mínimas): **30 gato, 25
+  perro**.
+- **`capturas/errors.log`: no se generó** -- cero errores de captura en toda la corrida.
+- **Envío:** las 55 quedaron en `send_status: enviado` (0 en `error`). Log completo:
+  [`evidencia/estabilidad/sesion.log`](evidencia/estabilidad/sesion.log) (salida de consola) y
+  [`evidencia/estabilidad/log-estabilidad.jsonl`](evidencia/estabilidad/log-estabilidad.jsonl)
+  (bitácora `pendiente`/`enviado` de cada intento).
+- **Lista completa de los 56 `capture_id`** (55 de la sesión + 1 del reinicio, en orden):
+  [`evidencia/estabilidad/capture_ids.txt`](evidencia/estabilidad/capture_ids.txt).
+
+### Reinicio + captura nueva que llega al portal
+
+```
+$ ~/edge-venv/bin/python main.py --config config.json --once
+[8d026b3c] cat (confianza 0.88, 136.0 ms) -- enviado (648.4 ms)
 ```
 
-Durante al menos 5 minutos, alternar objetos reales (gato/perro, o fotos de ambos) frente a la
-cámara, variados a lo largo de la ventana -- no todos al inicio. Con `capture_interval_seconds: 5`
-del config, 5 minutos dan ~60 capturas, de sobra para las 20 mínimas.
+Confirmado contra la API de lectura pública (la misma que usa el portal, sin credenciales):
+`8d026b3c-08ed-4770-9632-0ecd2d38b843` aparece en `GET /captures?limit=50`.
 
-Verificar al terminar:
+## Criterios de «hecho»
 
-```bash
-tmux capture-pane -t edge -p | tail -40        # log de la sesión
-ls capturas/*.json | wc -l                      # total de capturas
-python3 -c "
-import json, glob
-preds = [json.load(open(f))['predicted_class'] for f in glob.glob('capturas/*.json')]
-print('cat:', preds.count('cat'), '| dog:', preds.count('dog'), '| total:', len(preds))
-"
-cat capturas/log.jsonl | python3 -c "
-import json, sys
-estados = [json.loads(l)['send_status'] for l in sys.stdin]
-print({s: estados.count(s) for s in set(estados)})
-"
-```
+- [x] 5 minutos de operación continua sin caídas (con el fix -- el primer intento sin el fix
+  reveló el bug de arriba, que ya quedó corregido)
+- [x] Reiniciar el programa y hacer una captura nueva que llega al portal
+- [x] 20 capturas repartidas entre gato y perro enviadas a AWS (55: 30 gato, 25 perro)
+- [x] Errores reales quedan registrados (no hubo ninguno en la corrida final; el mecanismo de
+  registro -- `errors.log` -- sí quedó verificado y corregido a partir de la falla del primer intento)
 
-Si algo quedó en `error` real (no simulado), **no se oculta**: se documenta tal cual en la evidencia
-final, junto con el resultado de `--retry-failed`.
+## Scripts de apoyo
 
-### 2. Reinicio + captura nueva que llega al portal
-
-```bash
-tmux kill-session -t edge
-~/edge-venv/bin/python main.py --config config.json --once
-```
-
-Copiar el `capture_id` que imprime, y confirmar que llega a la API que usa el portal (sin
-credenciales, pública):
-
-```bash
-bash verificar_captura.sh <capture_id>
-```
-
-O revisarlo directamente en el portal: <http://3.133.248.228> (sección «Capturas Edge»).
-
-### 3. Evidencia para la entrega
-
-- `docs/p4/estabilidad-procedimiento.md` (este documento) actualizado con los resultados reales:
-  hora de inicio/fin, total de capturas, conteo gato/perro, cualquier error real y su reintento.
-- Lista completa de los 20+ `capture_id` (o el archivo `capturas/log.jsonl` completo como anexo).
-- Captura de pantalla del portal mostrando la captura del paso 2 (la del reinicio).
-
-## Scripts de apoyo (ya probados por separado)
-
-- [`edge/sin_red_demo.sh`](../../edge/sin_red_demo.sh) -- mismo patrón que se usará en la demo
-  (P4-22/P4-23) para "desconectar red → sigue clasificando → reconectar → llega al portal". Probado
-  con una ventana corta (20s): 6 capturas durante el corte, 2 después, todo correcto.
-- [`edge/verificar_captura.sh`](../../edge/verificar_captura.sh) -- confirma por API (no por AWS CLI)
-  que una captura llegó, igual que lo vería el portal. Probado contra una captura real.
-
-## Criterios de «hecho» (pendientes de ejecución real)
-
-- [ ] 5 minutos de operación continua sin caídas
-- [ ] Reiniciar el programa y hacer una captura nueva que llega al portal
-- [ ] 20 capturas repartidas entre gato y perro enviadas a AWS
-- [ ] Errores reales (si los hubo) quedan registrados
+- [`edge/sin_red_demo.sh`](../../edge/sin_red_demo.sh) -- mismo patrón para la demo (P4-22/P4-23):
+  "desconectar red → sigue clasificando → reconectar → llega al portal".
+- [`edge/verificar_captura.sh`](../../edge/verificar_captura.sh) -- confirma por la API pública que
+  una captura llegó, igual que lo vería el portal.
