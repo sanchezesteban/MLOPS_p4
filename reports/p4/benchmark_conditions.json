@@ -1,0 +1,14 @@
+{
+  "image": "validacion/000005_000004.jpg",
+  "onnxruntime_version": "1.31.0",
+  "providers": [
+    "AzureExecutionProvider",
+    "CPUExecutionProvider"
+  ],
+  "warmup_per_variant": 10,
+  "measure_per_variant": 100,
+  "cpu_temp_before_c": 50.5,
+  "cpu_temp_after_c": 68.2,
+  "peak_rss_kb": 118500,
+  "errors": {}
+}
