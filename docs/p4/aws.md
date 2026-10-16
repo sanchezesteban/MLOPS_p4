@@ -327,10 +327,12 @@ para las capturas reales de la Pi.
 
 ### Configuración de la Pi sin secretos
 
-Plantilla: `app/edge/.env.pi.example`. Se copia a `app/edge/.env.pi`, que Git ignora por el
-patrón `.env.*`. Incluye `DEVICE_ID`, la ruta y el SHA-256 del modelo INT8, el recorte, el
-intervalo de captura, la URL de la API y el **nombre** del perfil AWS. La llave se configura con
-`aws configure --profile mlops-p4-device` y nunca va en el archivo.
+Plantilla: `edge/config.example.json` (#12). Se copia a `edge/config.json`, que Git ignora
+(`edge/.gitignore`). Incluye `device_id`, la ruta y la versión del modelo INT8, el recorte
+(`crop`), el modo e intervalo de captura, la URL de la API (`api_url`), la región y el **nombre**
+del perfil AWS (`aws_profile`). El SHA-256 del modelo se calcula al cargarlo y se imprime al
+arrancar. La llave se configura con `aws configure --profile mlops-p4-device` y nunca va en el
+archivo.
 
 ## Portal en AWS (#18)
 
