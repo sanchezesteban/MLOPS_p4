@@ -72,14 +72,27 @@ comando de reconexión). Con `main.py` corriendo en modo intervalo y `api_url` c
 Log completo de esa prueba: [`evidencia/log-sin-red-ejemplo.jsonl`](evidencia/log-sin-red-ejemplo.jsonl)
 (17 líneas: `pendiente`+`error` × 7, `pendiente`+`enviado` × 2).
 
-## Pendiente
+### Fallo controlado real, coordinado con Ikram (`scripts/p4_ingesta_fallo.sh`)
 
-- **Prueba del fallo controlado con Ikram** (`scripts/p4_ingesta_fallo.sh off/on`): ese script necesita
-  un perfil de **administrador** de la cuenta (nosotros solo tenemos el perfil de lectura y el del
-  dispositivo), así que hay que coordinarlo con Ikram para correrlo juntos. El comportamiento esperado
-  ya está cubierto por la prueba de "sin red" de arriba (misma ruta de código: cualquier respuesta que
-  no sea 200/201 cae en `error` con `send_error` describiendo el código real) -- falta el caso puntual
-  de un 5xx real de Lambda, que es justo lo que simula ese script.
+Ikram puso la ingesta en `off` (concurrencia reservada en 0 para la Lambda) y se tomó una captura
+real:
+
+```
+$ ~/edge-venv/bin/python main.py --config config.json --once
+[d416b8a2] cat (confianza 0.96, 194.2 ms) -- ERROR al enviar: 503 {"message":"Service Unavailable"}
+```
+
+Quedó en `send_status: error` con el `503` real, sin tumbar nada. Ikram puso la ingesta de vuelta en
+`on` y se reintentó:
+
+```
+$ ~/edge-venv/bin/python main.py --config config.json --retry-failed
+Reintentando 1 captura(s) en error...
+[d416b8a2] cat (confianza 0.96, 194.2 ms) -- enviado (4470.2 ms)
+```
+
+`aws dynamodb get-item` sobre `d416b8a2-...` confirma **un solo ítem** -- el reintento tras el fallo
+real tampoco duplica.
 
 ## Criterios de «hecho»
 
