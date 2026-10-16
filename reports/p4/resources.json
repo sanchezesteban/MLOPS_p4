@@ -5,12 +5,40 @@
     "int8_bytes": 11430716,
     "reduction_percent": 74.72433282443903
   },
-  "latency": null,
-  "warmup_discarded": null,
+  "latency": {
+    "fp32": {
+      "samples": 100,
+      "min_ms": 141.39,
+      "p50_ms": 142.2355,
+      "p95_ms": 148.1268,
+      "max_ms": 192.293,
+      "mean_ms": 143.48994,
+      "std_ms": 5.5324839734426705
+    },
+    "int8": {
+      "samples": 100,
+      "min_ms": 69.875,
+      "p50_ms": 70.184,
+      "p95_ms": 71.62334999999999,
+      "max_ms": 73.758,
+      "mean_ms": 70.42249000000001,
+      "std_ms": 0.6715462827683583
+    }
+  },
+  "warmup_discarded": {
+    "fp32": 10,
+    "int8": 10
+  },
   "validation": {
     "min_measurements_per_variant": 100
   },
-  "speedup": null,
-  "status": "parcial",
-  "latency_note": "Pendiente del benchmark de la Pi (issue #11): un solo CSV con las columnas variant, repetition, warmup, latency_ms."
+  "speedup": {
+    "p50_ratio": 2.026608628747293,
+    "p95_ratio": 2.068135601029553,
+    "spread_ms": 6.204030256211029,
+    "significant": true,
+    "note": "La diferencia entre FP32 e INT8 supera la variabilidad combinada."
+  },
+  "status": "completo",
+  "latency_note": null
 }
