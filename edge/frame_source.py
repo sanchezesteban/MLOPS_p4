@@ -40,6 +40,13 @@ class CameraFrameSource(FrameSource):
     # un frame viejo, de antes de que el objeto estuviera frente a la cámara.
     _STALE_FRAMES_TO_DISCARD = 4
 
+    # Calentamiento al abrir la cámara: el auto-exposure/auto-white-balance de
+    # la C920 tarda un momento en estabilizarse -- sin esto, la primera foto
+    # justo después de arrancar el programa (p. ej. tras un reinicio en la
+    # demo) sale oscura o con colores raros, aunque la escena esté bien
+    # iluminada. ~30 frames a 30fps son ~1s, suficiente para que se ajuste.
+    _WARMUP_FRAMES = 30
+
     def __init__(self, device_index: int = 0):
         import cv2
 
@@ -47,6 +54,8 @@ class CameraFrameSource(FrameSource):
         if not self._cap.isOpened():
             raise RuntimeError(f"No se pudo abrir la cámara en el índice {device_index}")
         self._cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+        for _ in range(self._WARMUP_FRAMES):
+            self._cap.grab()
 
     def read(self) -> np.ndarray:
         import cv2
