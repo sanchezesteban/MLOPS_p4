@@ -10,6 +10,15 @@ intenta mandar cada captura (P4-12), pero un fallo de envío (sin red, 5xx,
 lo que sea) solo se registra en `log.jsonl` -- no detiene ni hace fallar la
 captura/clasificación siguiente.
 
+Tampoco un fallo real de captura (p. ej. un glitch transitorio de la cámara
+USB) debe tumbar la operación continua (P4-13, "5 minutos sin caídas"): en
+modo intervalo/tecla, una excepción de una sola vuelta se registra en
+`errors.log` y el programa sigue con la siguiente captura, en vez de morir
+por completo. Antes de esta corrección el `while True` solo atrapaba
+`KeyboardInterrupt` -- cualquier otra excepción tumbaba todo el proceso sin
+dejar rastro; es la sospecha más probable de por qué una corrida de P4-13 se
+cortó sola a los ~2 minutos sin que quedara ningún traceback guardado.
+
 Uso:
     python main.py --config config.json             # modo continuo (tecla/intervalo)
     python main.py --config config.json --once       # una sola captura y termina
@@ -22,6 +31,7 @@ from __future__ import annotations
 import argparse
 import json
 import time
+import traceback
 import uuid
 from datetime import UTC, datetime
 from pathlib import Path
@@ -37,6 +47,18 @@ from send import send_event
 
 def _load_config(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _log_capture_error(errors_path: Path, exc: Exception) -> None:
+    """Una captura fallida se registra y se sigue -- nunca debe perderse en
+    silencio como pasaba antes (ver docstring del módulo)."""
+    errors_path.parent.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.now(UTC).astimezone().isoformat()
+    with errors_path.open("a", encoding="utf-8") as handle:
+        handle.write(f"[{stamp}] {type(exc).__name__}: {exc}\n")
+        handle.write(traceback.format_exc())
+        handle.write("\n")
+    print(f"ERROR en esta captura (se sigue con la siguiente): {type(exc).__name__}: {exc}")
 
 
 def _crop_or_null(crop: dict) -> dict | None:
@@ -169,12 +191,16 @@ def main() -> None:
 
         mode = config.get("capture_mode", "interval")
         interval = config.get("capture_interval_seconds", 5)
+        errors_path = output_dir / "errors.log"
         print(f"Modo: {mode} (Ctrl+C para salir)")
         while True:
             if mode == "key":
                 input("Presiona Enter para capturar...")
-            event, send_result = _run_once(config, model, frame_source, output_dir)
-            print(_format_event(event, send_result))
+            try:
+                event, send_result = _run_once(config, model, frame_source, output_dir)
+                print(_format_event(event, send_result))
+            except Exception as exc:  # noqa: BLE001 -- una captura fallida no debe tumbar la operación continua
+                _log_capture_error(errors_path, exc)
             if mode == "interval":
                 time.sleep(interval)
     except KeyboardInterrupt:
