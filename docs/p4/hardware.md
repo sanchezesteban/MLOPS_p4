@@ -34,7 +34,7 @@ python3 -m venv ~/edge-venv
 |---|---|
 | Python | 3.13.5 |
 | onnxruntime | 1.31.0 (`CPUExecutionProvider` disponible) |
-| opencv-python-headless | 5.0.0 |
+| opencv-python-headless | 5.0.0.93 |
 | pillow | 12.3.0 |
 | numpy | 2.5.4 |
 
