@@ -41,7 +41,7 @@ variable "budget_emails" {
 variable "evaluator_access_until" {
   description = "Fecha (UTC, ISO-8601) en que expira el acceso de solo lectura del evaluador."
   type        = string
-  default     = "2026-11-15T23:59:59Z"
+  default     = "2026-11-17T23:59:59Z"
 }
 
 variable "portal_origins" {
