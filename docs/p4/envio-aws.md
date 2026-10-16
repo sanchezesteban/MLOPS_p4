@@ -3,6 +3,13 @@
 **Issue:** [#12](https://github.com/sanchezesteban/MLOPS_p4/issues/12) · **Responsable:** Juan Pablo (@jpdelmuro)
 **Ámbito:** rúbrica 4.1, 4.3.
 
+> **Nota (16-oct):** las capturas `59d0be4a…` y `d416b8a2…` referenciadas abajo eran de **prueba**
+> (parte de validar este mismo ticket) y se eliminaron de DynamoDB/S3 en la limpieza que hizo Ikram
+> ese mismo día -- ya no existen en AWS, los comandos de esta página no se pueden volver a correr
+> contra ellas tal cual. Quedan documentadas como evidencia de que el envío/reintento/fallo
+> controlado funcionaron en su momento (con salidas reales, no inventadas). La prueba de fallo y
+> reintento se repite en vivo durante la demo (P4-22/P4-23), con capturas nuevas.
+
 ## Resumen
 
 - `edge/send.py`: firma SigV4 (misma lógica que `app/edge_ingest/simulate.py`, el simulador de
