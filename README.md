@@ -222,4 +222,4 @@ cd frontend && npm ci && npm test
 | Envío y estabilidad | [`envio-aws.md`](docs/p4/envio-aws.md) · [`estabilidad-procedimiento.md`](docs/p4/estabilidad-procedimiento.md) |
 | AWS | [`aws.md`](docs/p4/aws.md) |
 | Portal | [`capturas-edge.md`](docs/p4/capturas-edge.md) · [`capturas-api-real.md`](docs/p4/capturas-api-real.md) |
-| Entrega | [`ficha-entrega.md`](docs/p4/ficha-entrega.md) · [`verificacion-manual.md`](docs/p4/verificacion-manual.md) · [`guion-demo.md`](docs/p4/guion-demo.md) |
+| Entrega | [`ficha-entrega.md`](docs/p4/ficha-entrega.md) · [`verificacion-manual.md`](docs/p4/verificacion-manual.md) · [`guion-demo.md`](docs/p4/guion-demo.md) · [`autoevaluacion.md`](docs/p4/autoevaluacion.md) |

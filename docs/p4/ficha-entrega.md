@@ -17,6 +17,7 @@
 |---|---|
 | Repositorio | https://github.com/sanchezesteban/MLOPS_p4 |
 | Instrucciones | [`README.md`](../../README.md) |
+| Autoevaluación (provisional) | [`autoevaluacion.md`](autoevaluacion.md) |
 | Portal (sección «Capturas Edge») | http://3.133.248.228 → menú «Capturas Edge» (`/captures`) |
 | API de lectura (pública, solo lectura) | `GET https://el1c2mr69k.execute-api.us-east-2.amazonaws.com/captures?limit=50` |
 | Video de demostración (extra) | **PENDIENTE** — se agrega al terminar la grabación |

@@ -50,6 +50,17 @@ $ uv run --locked --no-build python edge/resource_report.py \
 
 Se descartaron 10 filas de calentamiento por variante (20 de 220).
 
+**Condiciones equivalentes (criterio 3.1).** Ambas variantes se midieron en la misma Raspberry Pi
+Zero 2 W, en la misma corrida, con la misma imagen de entrada (`000005_000004.jpg`, de validación),
+el mismo preprocesamiento, el mismo runtime (onnxruntime 1.31.0, `CPUExecutionProvider`, hilos por
+defecto) y el mismo tamaño de entrada (1×3×128×128). El original se mide como **ONNX FP32 exportado
+de los mismos pesos del `best.pt`** (SHA `f759cde2…`): PyTorch no se instala en la Zero 2 W
+(512 MB de RAM, sin necesidad para el despliegue), y el FP32 en ONNX da exactamente las mismas
+predicciones que PyTorch en las 131 muestras de validación (`reports/p4/quality_predictions.csv`,
+columnas `original_pred` y `fp32_pred`). Así la única variable entre las dos mediciones es la
+cuantización. FP32 corrió primero; la temperatura subió de 50.5 °C a 68.2 °C durante la corrida, lo
+que, si acaso, penaliza a la INT8 (medida después), no la favorece.
+
 - **Aceleración INT8 vs. FP32:** ×**2.03** en p50 y ×**2.07** en p95 — `significant: true` (la diferencia de medianas, ~72 ms, supera la variabilidad combinada de 6.2 ms; no es ruido).
 - Además de ir al doble de velocidad, la INT8 tiene **menos dispersión** (σ 0.67 ms vs 5.53 ms): las latencias son más predecibles, útil para el presupuesto de tiempo del recorrido.
 
