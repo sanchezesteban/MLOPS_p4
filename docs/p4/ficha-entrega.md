@@ -20,7 +20,7 @@
 | Autoevaluación (provisional) | [`autoevaluacion.md`](autoevaluacion.md) |
 | Portal (sección «Capturas Edge») | http://3.133.248.228 → menú «Capturas Edge» (`/captures`) |
 | API de lectura (pública, solo lectura) | `GET https://el1c2mr69k.execute-api.us-east-2.amazonaws.com/captures?limit=50` |
-| Video de demostración (extra) | **PENDIENTE** — se agrega al terminar la grabación |
+| Video de demostración (extra) | https://drive.google.com/file/d/1GxSCgOiC9ObiwqF4v6KCUMN8vCCcly-3/view |
 
 ## Acceso de evaluación a AWS (solo lectura)
 
