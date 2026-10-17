@@ -65,15 +65,15 @@ Compuerta: **NO ACTIVADA** según la evidencia; se confirma en la demostración.
 
 | Puntos | Criterio | Estado |
 |---|---|---|
-| PENDIENTE / 5 | V1 | Video en preparación |
-| PENDIENTE / 5 | V2 | Video en preparación |
-| PENDIENTE / 5 | V3 | Video en preparación |
+| PENDIENTE / 5 | V1 | Video entregado: https://drive.google.com/file/d/1GxSCgOiC9ObiwqF4v6KCUMN8vCCcly-3/view (lo califica el evaluador) |
+| PENDIENTE / 5 | V2 | Video entregado (lo califica el evaluador) |
+| PENDIENTE / 5 | V3 | Video entregado (lo califica el evaluador) |
 
 ## Resultado provisional
 
 ```text
 Base confirmada por archivos:  99.5 / 100 (sujeta a la demostración en vivo)
-Video extra:                   pendiente (hasta 15)
+Video extra:                   entregado, pendiente de calificar (hasta 15)
 Compuerta:                     no activada según la evidencia
 ```
 
