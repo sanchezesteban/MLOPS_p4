@@ -54,6 +54,22 @@ Detalle y prueba de permisos: [`aws.md`](aws.md) («Acceso de evaluación»).
 | Clases y entrada | `{0: cat, 1: dog}`, 128×128 RGB, normalización ImageNet | Igual |
 | Recuperación | `dvc pull` (remote `p4`, `s3://mlops-p4-models-595981034933/dvc`) | Igual |
 
+### Dónde descargar cada artefacto
+
+Los pesos no van en Git: se versionan con DVC en el bucket del proyecto. Con el usuario de
+evaluación se descargan desde la consola de S3 (bucket `mlops-p4-models-595981034933`); con una
+llave del equipo, con `dvc pull`.
+
+| Artefacto | Objeto en S3 | Tamaño | SHA-256 |
+|---|---|---|---|
+| `best.pt` (original, P3) | `dvc/files/md5/1d/9a6b66d4a12d93ee3cc440047d03ec` | 45 304 641 B | `f759cde2…ab7d9` |
+| `model_fp32.onnx` | `dvc/files/md5/10/dfddc13c23b94f4ae26e810f5ae0eb` | 45 224 191 B | `7a00948a…7c78` |
+| `model_int8.onnx` (desplegado) | `dvc/files/md5/d1/da489b980cb3364ce3511f355cf263` | 11 430 716 B | `58effa03…a1bb` |
+
+Referencias del Proyecto 3 para contrastar la continuidad: `reports/selection.json`,
+`reports/manifests/v0.1.1/manifest_meta.json`, `docs/seleccion-candidato.md` y
+`docs/evaluacion-final.md`.
+
 ## Hardware y runtime
 
 Raspberry Pi Zero 2 W (4× Cortex-A53, 512 MB) · Raspberry Pi OS Lite 64-bit (Debian 13) ·
